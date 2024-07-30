@@ -39,13 +39,6 @@ typedef struct {
 
 AnimatedSpriteMap* getSprites();
 
-int load_sprites(const char* filename, SpriteMap* sprite_map);
-void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map);
-
-Sprite* find_sprite(SpriteMap* sprite_map, const char* name);
-
-void render_sprite(SDL_Renderer* renderer, SpriteMap* sprite_map, SDL_Texture* spritesheet, const char* name, int x, int y);
-
 int init_sprites(SDL_Renderer* renderer,
                  SDL_Texture** spritesheet,
                  SpriteMap* sprite_map,
@@ -54,12 +47,18 @@ int init_sprites(SDL_Renderer* renderer,
 
 AnimatedSprite* create_animation(const char* name, float frame_duration);
 
+int load_sprites(const char* filename, SpriteMap* sprite_map);
+void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map);
 
+Sprite* find_sprite(SpriteMap* sprite_map, const char* name);
 AnimatedSprite* find_animation(AnimatedSpriteMap* animation_map, const char* name);
 
-void add_frame_to_animation(AnimatedSprite* anim, Sprite* sprite);
-
-void update_animation(AnimatedSprite* anim, float delta_time);
+void render_sprite(SDL_Renderer* renderer,
+                   SpriteMap* sprite_map,
+                   SDL_Texture* spritesheet,
+                   const char* name,
+                   int x,
+                   int y);
 
 void render_animation(SDL_Renderer* renderer,
                       SpriteMap* sprite_map,
@@ -68,9 +67,10 @@ void render_animation(SDL_Renderer* renderer,
                       int x,
                       int y);
 
+void update_animation(AnimatedSprite* anim, float delta_time);
+
 void destroy_animation(AnimatedSprite* anim);
 
 void cleanup_spritesheet(SDL_Texture* spritesheet);
-
 
 #endif

@@ -27,7 +27,7 @@ int main() {
             gRenderer,
             &spritesheet,
             &sprite_map,
-            "images/tileset.png",
+            "assets/tileset.png",
             "tile_coords"
         ) > 0) {
         GFATAL("Failed to initialize sprites");

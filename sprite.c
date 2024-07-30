@@ -52,7 +52,8 @@ void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map) {
         if (strcmp(base_name, prev_base_name) != 0) {
             if (animation_map->count > 0) {
                 // Set the frame count for the previous animation
-                animation_map->sprites[animation_map->count - 1].frame_count = i - current_start_index;
+                animation_map->sprites[animation_map->count - 1].frame_count
+                    = i - current_start_index;
             }
             
             if (animation_map->count >= MAX_ANIMATIONS) {
@@ -74,7 +75,8 @@ void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map) {
     
     // Set the frame count for the last animation
     if (animation_map->count > 0) {
-        animation_map->sprites[animation_map->count - 1].frame_count = sprite_map->count - current_start_index;
+        animation_map->sprites[animation_map->count - 1].frame_count
+            = sprite_map->count - current_start_index;
     }
 }
 

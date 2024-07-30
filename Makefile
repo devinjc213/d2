@@ -4,9 +4,11 @@ LDFLAGS = -lSDL2 -lSDL2_image
 
 TARGET = sdl2_test
 SRCS = main.c logger.c sprite.c
+BIN_DIR = bin
 
 $(TARGET): $(SRCS)
-	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET) $(LDFLAGS)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRCS) -o $(BIN_DIR)/$(TARGET) $(LDFLAGS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(BIN_DIR)/$(TARGET)
