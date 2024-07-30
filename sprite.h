@@ -13,6 +13,7 @@
 
 #define MAX_ANIMATIONS 100
 
+
 typedef struct {
     char name[MAX_NAME_LENGTH];
     SDL_Rect rect;
@@ -37,32 +38,28 @@ typedef struct {
     int count;
 } AnimatedSpriteMap;
 
-AnimatedSpriteMap* getSprites();
+extern SpriteMap sprite_map;
+extern AnimatedSpriteMap animation_map;
+extern SDL_Texture* spritesheet;
 
 int init_sprites(SDL_Renderer* renderer,
-                 SDL_Texture** spritesheet,
-                 SpriteMap* sprite_map,
                  const char* spritesheet_path,
                  const char* spritedata_path);
 
 AnimatedSprite* create_animation(const char* name, float frame_duration);
 
-int load_sprites(const char* filename, SpriteMap* sprite_map);
-void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map);
+int load_sprites(const char* filename);
+void load_animations();
 
 Sprite* find_sprite(SpriteMap* sprite_map, const char* name);
-AnimatedSprite* find_animation(AnimatedSpriteMap* animation_map, const char* name);
+AnimatedSprite* find_animation(const char* name);
 
 void render_sprite(SDL_Renderer* renderer,
-                   SpriteMap* sprite_map,
-                   SDL_Texture* spritesheet,
                    const char* name,
                    int x,
                    int y);
 
 void render_animation(SDL_Renderer* renderer,
-                      SpriteMap* sprite_map,
-                      SDL_Texture* spritesheet,
                       AnimatedSprite* anim,
                       int x,
                       int y);

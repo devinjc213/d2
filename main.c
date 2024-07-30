@@ -5,18 +5,16 @@
 #include "defs.h"
 #include "logger.h"
 #include "sprite.h"
+#include "game.h"
+#include "input.h"
 
 int init();
 void closeGame();
-SDL_Texture* loadTexture(const char* path);
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Texture* gTileSheet = NULL;
 
-SpriteMap sprite_map;
-AnimatedSpriteMap animation_map;
-SDL_Texture* spritesheet = NULL;
 
 int main() {
     if (init() > 0) {
@@ -25,17 +23,19 @@ int main() {
 
     if (init_sprites(
             gRenderer,
-            &spritesheet,
-            &sprite_map,
             "assets/tileset.png",
             "tile_coords"
         ) > 0) {
         GFATAL("Failed to initialize sprites");
     }
 
-    load_animations(&sprite_map, &animation_map);
+    load_animations();
 
     float delta_time = 1.0f / 144.0f;
+
+    Game* game = create_game();
+    InputState input;
+    init_input(&input);
 
     int quit = 0;
     while (quit != 1) {
@@ -43,36 +43,13 @@ int main() {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = 1;
+            } else {
+                handle_input(&e, &input);
             }
         }
 
-        for (int i = 0; i < animation_map.count; i++) {
-            update_animation(&animation_map.sprites[i], delta_time);
-        }
-
-        SDL_RenderClear(gRenderer);
-
-        render_sprite(gRenderer,
-                      &sprite_map,
-                      spritesheet,
-                      "big_zombie_run_anim_f2",
-                      100,
-                      100);
-        render_sprite(gRenderer,
-                      &sprite_map,
-                      spritesheet,
-                      "chest_full_open_anim_f0",
-                      200,
-                      200);
-
-        render_animation(gRenderer,
-                         &sprite_map,
-                         spritesheet,
-                         find_animation(&animation_map, "big_zombie_run_anim"),
-                         300,
-                         300);
-
-        SDL_RenderPresent(gRenderer);
+        update_game(game, &input, delta_time);
+        render_game(gRenderer, game);
     }
 
     closeGame();
@@ -115,26 +92,6 @@ int init() {
     }
 
     return 0;
-}
-
-SDL_Texture* loadTexture(const char* path) {
-    SDL_Texture* newTexture = NULL;
-
-    SDL_Surface* loadedSurface = IMG_Load(path);
-    if (loadedSurface == NULL) {
-        GERROR("Unable to load image %s! SDL_image Error: %s\n",
-               path,
-               IMG_GetError());
-    }
-
-    newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
-    if (newTexture == NULL) {
-        GERROR("Unable to create texture from %s! SDL Error: %s\n",
-               path,
-               SDL_GetError());
-    }
-
-    return newTexture;
 }
 
 void closeGame() {

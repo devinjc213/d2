@@ -3,7 +3,11 @@
 #include "sprite.h"
 #include "logger.h"
 
-int load_sprites(const char* filename, SpriteMap* sprite_map) {
+SpriteMap sprite_map;
+AnimatedSpriteMap animation_map;
+SDL_Texture* spritesheet = NULL;
+
+int load_sprites(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
         GFATAL("Failed to read sprite data file: %s\n", filename);
@@ -14,27 +18,27 @@ int load_sprites(const char* filename, SpriteMap* sprite_map) {
     int x, y, w, h;
 
     while(fscanf(file, "%s %d %d %d %d", name, &x, &y, &w, &h) == 5) {
-        if (sprite_map->count >= MAX_SPRITES) {
+        if (sprite_map.count >= MAX_SPRITES) {
             GWARN("Max sprites reached. Ignoring remaining.\n");
             break;
         }
 
-        strncpy(sprite_map->sprites[sprite_map->count].name, name, MAX_NAME_LENGTH -1);
-        sprite_map->sprites[sprite_map->count].rect = (SDL_Rect){x, y, w, h};
-        sprite_map->count++;
+        strncpy(sprite_map.sprites[sprite_map.count].name, name, MAX_NAME_LENGTH -1);
+        sprite_map.sprites[sprite_map.count].rect = (SDL_Rect){x, y, w, h};
+        sprite_map.count++;
     }
 
     fclose(file);
     return 0;
 }
 
-void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map) {
+void load_animations() {
     int current_start_index = 0;
     char prev_base_name[MAX_NAME_LENGTH] = "";
-    animation_map->count = 0;
+    animation_map.count = 0;
 
-    for (int i = 0; i < sprite_map->count; i++) {
-        Sprite* sprite = &sprite_map->sprites[i];
+    for (int i = 0; i < sprite_map.count; i++) {
+        Sprite* sprite = &sprite_map.sprites[i];
         
         // Check if the sprite name ends with _f followed by a number
         char* last_underscore = strrchr(sprite->name, '_');
@@ -50,18 +54,18 @@ void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map) {
 
         // If this is a new base name, start a new animation
         if (strcmp(base_name, prev_base_name) != 0) {
-            if (animation_map->count > 0) {
+            if (animation_map.count > 0) {
                 // Set the frame count for the previous animation
-                animation_map->sprites[animation_map->count - 1].frame_count
+                animation_map.sprites[animation_map.count - 1].frame_count
                     = i - current_start_index;
             }
             
-            if (animation_map->count >= MAX_ANIMATIONS) {
+            if (animation_map.count >= MAX_ANIMATIONS) {
                 printf("Warning: Maximum number of animations reached.\n");
                 break;
             }
             
-            AnimatedSprite* new_anim = &animation_map->sprites[animation_map->count++];
+            AnimatedSprite* new_anim = &animation_map.sprites[animation_map.count++];
             strncpy(new_anim->name, base_name, MAX_NAME_LENGTH - 1);
             new_anim->start_index = i;
             new_anim->current_frame = 0;
@@ -74,9 +78,9 @@ void load_animations(SpriteMap* sprite_map, AnimatedSpriteMap* animation_map) {
     }
     
     // Set the frame count for the last animation
-    if (animation_map->count > 0) {
-        animation_map->sprites[animation_map->count - 1].frame_count
-            = sprite_map->count - current_start_index;
+    if (animation_map.count > 0) {
+        animation_map.sprites[animation_map.count - 1].frame_count
+            = sprite_map.count - current_start_index;
     }
 }
 
@@ -90,22 +94,20 @@ Sprite* find_sprite(SpriteMap* sprite_map, const char* name) {
     return NULL;
 }
 
-AnimatedSprite* find_animation(AnimatedSpriteMap* animation_map, const char* name) {
-    for (int i = 0; i < animation_map->count; i++) {
-        if (strcmp(animation_map->sprites[i].name, name) == 0) {
-            return &animation_map->sprites[i];
+AnimatedSprite* find_animation(const char* name) {
+    for (int i = 0; i < animation_map.count; i++) {
+        if (strcmp(animation_map.sprites[i].name, name) == 0) {
+            return &animation_map.sprites[i];
         }
     }
     return NULL;
 }
 
 void render_sprite(SDL_Renderer* renderer,
-                   SpriteMap* sprite_map,
-                   SDL_Texture* spritesheet,
                    const char* name,
                    int x,
                    int y) {
-    Sprite* sprite = find_sprite(sprite_map, name);
+    Sprite* sprite = find_sprite(&sprite_map, name);
     if (sprite == NULL) {
         GERROR("Failed to load sprite for rendering: %s", name);
     }
@@ -115,8 +117,6 @@ void render_sprite(SDL_Renderer* renderer,
 }
 
 int init_sprites(SDL_Renderer* renderer,
-                 SDL_Texture** spritesheet,
-                 SpriteMap* sprite_map,
                  const char* spritesheet_path,
                  const char* spritedata_path) {
     SDL_Surface* surface = IMG_Load(spritesheet_path);
@@ -125,13 +125,13 @@ int init_sprites(SDL_Renderer* renderer,
         return 1;
     }
 
-    *spritesheet = SDL_CreateTextureFromSurface(renderer, surface);
+    spritesheet = SDL_CreateTextureFromSurface(renderer, surface);
     if(spritesheet == NULL) {
         GFATAL("Failed to create spritesheet texture: %s\n", SDL_GetError());
         return 1;
     }
 
-    load_sprites(spritedata_path, sprite_map);
+    load_sprites(spritedata_path);
 
     return 0;
 }
@@ -164,14 +164,12 @@ void update_animation(AnimatedSprite* anim, float delta_time) {
 
 // Render the current frame of an animation
 void render_animation(SDL_Renderer* renderer,
-                      SpriteMap* sprite_map,
-                      SDL_Texture* spritesheet,
                       AnimatedSprite* anim,
                       int x,
                       int y) {
     if (anim->frame_count > 0) {
         int sprite_index = anim->start_index + anim->current_frame;
-        Sprite* current_sprite = &sprite_map->sprites[sprite_index];
+        Sprite* current_sprite = &sprite_map.sprites[sprite_index];
         SDL_Rect dest = {x, y, current_sprite->rect.w, current_sprite->rect.h};
         SDL_RenderCopy(renderer, spritesheet, &current_sprite->rect, &dest);
     }
