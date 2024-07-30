@@ -1,3 +1,6 @@
+// Thanks to Travis Vroman and his Kohi engine
+// playlist for this logger setup
+// https://www.youtube.com/watch?v=l9e8PJskYnI&list=PLv8Ddw9K0JPg1BEO-RS-0MYs423cvLVtj&index=5
 #include "logger.h"
 #include "asserts.h"
 

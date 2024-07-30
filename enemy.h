@@ -6,12 +6,12 @@
 typedef struct {
     int x, y;
     int health;
-    AnimatedSprite* spirte;
+    AnimatedSprite* sprite;
 } Enemy;
 
-Enemy* create_enemy(int x, int y);
+Enemy* create_enemy(int x, int y, int health, const char* sprite_name);
 void destroy_enemy(Enemy* enemy);
-void update_enemy(Enemy* enemy);
-void render_enemy(Enemy* enemy);
+void update_enemy(Enemy* enemy, float delta_time);
+void render_enemy(SDL_Renderer* renderer, Enemy* enemy);
 
 #endif

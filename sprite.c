@@ -61,7 +61,7 @@ void load_animations() {
             }
             
             if (animation_map.count >= MAX_ANIMATIONS) {
-                printf("Warning: Maximum number of animations reached.\n");
+                GWARN("Max animations reached. Ignoring remaining\n");
                 break;
             }
             
@@ -131,26 +131,18 @@ int init_sprites(SDL_Renderer* renderer,
         return 1;
     }
 
-    load_sprites(spritedata_path);
+    if (load_sprites(spritedata_path) > 0) {
+        GFATAL("Sprites could not be loaded\n");
+        return 1;
+    }
+
+    load_animations();
 
     return 0;
 }
 
 void cleanup_spritesheet(SDL_Texture* spritesheet) {
     SDL_DestroyTexture(spritesheet);
-}
-
-AnimatedSprite* create_animation(const char* name, float frame_duration) {
-    AnimatedSprite* anim = (AnimatedSprite*)malloc(sizeof(AnimatedSprite));
-    if (anim == NULL) return NULL;
-    
-    strncpy(anim->name, name, MAX_NAME_LENGTH - 1);
-    anim->frame_count = 0;
-    anim->current_frame = 0;
-    anim->frame_duration = frame_duration;
-    anim->time_accumulated = 0.0f;
-    
-    return anim;
 }
 
 // Update animation based on elapsed time

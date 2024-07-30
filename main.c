@@ -9,27 +9,19 @@
 #include "input.h"
 
 int init();
-void closeGame();
+void shutdown_game();
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-SDL_Texture* gTileSheet = NULL;
-
 
 int main() {
     if (init() > 0) {
         GFATAL("Failed to initialize\n");
     }
 
-    if (init_sprites(
-            gRenderer,
-            "assets/tileset.png",
-            "tile_coords"
-        ) > 0) {
+    if (init_sprites(gRenderer, "assets/tileset.png", "tile_coords") > 0) {
         GFATAL("Failed to initialize sprites");
     }
-
-    load_animations();
 
     float delta_time = 1.0f / 144.0f;
 
@@ -52,7 +44,8 @@ int main() {
         render_game(gRenderer, game);
     }
 
-    closeGame();
+    destroy_game(game);
+    shutdown_game();
 
     return 0;
 }
@@ -94,12 +87,10 @@ int init() {
     return 0;
 }
 
-void closeGame() {
-    SDL_DestroyTexture(gTileSheet);
-    gTileSheet = NULL;
-
+void shutdown_game() {
     SDL_DestroyRenderer(gRenderer);
     SDL_DestroyWindow(gWindow);
+
     gWindow = NULL;
     gRenderer = NULL;
 

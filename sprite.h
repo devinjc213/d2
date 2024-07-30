@@ -46,8 +46,6 @@ int init_sprites(SDL_Renderer* renderer,
                  const char* spritesheet_path,
                  const char* spritedata_path);
 
-AnimatedSprite* create_animation(const char* name, float frame_duration);
-
 int load_sprites(const char* filename);
 void load_animations();
 

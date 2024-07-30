@@ -11,7 +11,7 @@ Game* create_game() {
         game->num_enemies = 1;
         game->enemies = (Enemy**)malloc(sizeof(Enemy*) * game->num_enemies);
         for (int i = 0; i < game->num_enemies; i++) {
-            //game->enemies[i] = create_enemy(50*i, 50);
+            game->enemies[i] = create_enemy(50*i, 50, 10, "big_demon_idle_anim");
         }
     }
 
@@ -21,7 +21,7 @@ Game* create_game() {
 void update_game(Game* game, InputState* input, float delta_time) {
     update_player(game->player, input, delta_time);
     for (int i = 0; i < game->num_enemies; i++) {
-        //update_enemy(game->enemies[i]);
+        update_enemy(game->enemies[i], delta_time);
     }
 }
 
@@ -29,7 +29,7 @@ void render_game(SDL_Renderer* renderer, Game* game) {
     SDL_RenderClear(renderer);
     render_player(renderer, game->player);
     for (int i = 0; i < game->num_enemies; i++) {
-        //render_enemy(game->enemies[i]);
+        render_enemy(renderer, game->enemies[i]);
     }
     SDL_RenderPresent(renderer);
 }
@@ -37,6 +37,7 @@ void render_game(SDL_Renderer* renderer, Game* game) {
 void destroy_game(Game* game) {
     destroy_player(game->player);
     for (int i = 0; i < game->num_enemies; i++) {
-        //destroy_enemy(game->enemies[i]);
+        destroy_enemy(game->enemies[i]);
     }
+    free(game);
 }
