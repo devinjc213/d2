@@ -1,7 +1,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include "sprite.h"
+#include "./shared/sprite.h"
 
 typedef struct {
     int x, y;

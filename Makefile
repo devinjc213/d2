@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -std=c11
 LDFLAGS = -lSDL2 -lSDL2_image
 
 TARGET = sdl2_test
-SRCS = main.c logger.c sprite.c player.c enemy.c game.c input.c
+SRCS = main.c ./shared/logger.c ./shared/sprite.c player.c enemy.c game.c input.c
 BIN_DIR = bin
 
 $(TARGET): $(SRCS)

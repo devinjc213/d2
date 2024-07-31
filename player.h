@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "sprite.h"
+#include "./shared/sprite.h"
 #include "input.h"
 #include <SDL2/SDL.h>
 

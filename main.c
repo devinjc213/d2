@@ -3,8 +3,8 @@
 #include <SDL2/SDL_render.h>
 #include <stdio.h>
 #include "defs.h"
-#include "logger.h"
-#include "sprite.h"
+#include "./shared/logger.h"
+#include "./shared/sprite.h"
 #include "game.h"
 #include "input.h"
 
