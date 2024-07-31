@@ -2,6 +2,7 @@
 #include <SDL2/SDL_image.h>
 #include "defs.h"
 #include "../../shared/logger.h"
+#include "../../shared/kiss_sdl.h"
 
 
 SDL_Window* eWindow;
@@ -9,6 +10,8 @@ SDL_Renderer* eRenderer;
 int mX, mY;
 void cleanup_editor();
 void render_block(SDL_Renderer* renderer, Block* block);
+kiss_array objects, a1, a2;
+kiss_window window1, window2;
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -22,9 +25,11 @@ int main() {
     SDL_Window* eWindow = SDL_CreateWindow("Tilemap Editor", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     SDL_Renderer* eRenderer = SDL_CreateRenderer(eWindow, -1, SDL_RENDERER_ACCELERATED);
 
-  if (init_sprites(eRenderer, "../../assets/tileset.png", "../../tile_coords") > 0) {
-    GFATAL("Failed to initialize sprites");
-  }
+    if (init_sprites(eRenderer, "../../assets/tileset.png", "../../tile_coords") > 0) {
+      GFATAL("Failed to initialize sprites");
+    }
+
+
     Block blocks[16];
     Sprite* selected_sprite = find_sprite(&sprite_map, "flask_big_green");
     int block_count = 0;
