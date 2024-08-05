@@ -13,7 +13,6 @@
 
 #define MAX_ANIMATIONS 100
 
-
 typedef struct {
     char name[MAX_NAME_LENGTH];
     SDL_Rect rect;

@@ -3,19 +3,18 @@
 #include "defs.h"
 #include "../../shared/logger.h"
 #include "../../shared/kiss_sdl.h"
+#include "tilemap.h"
+#include "panel.h"
 
 
 SDL_Window* eWindow;
 SDL_Renderer* eRenderer;
-int mX, mY;
 void cleanup_editor();
-void render_block(SDL_Renderer* renderer, Block* block);
 kiss_array objects, a1, a2;
 kiss_window window1, window2;
 void render_grid(SDL_Renderer* renderer);
-int snap_to_grid(int coord);
-Block* find_block(Block blocks[], int block_count, int x, int y);
-void remove_block(Block blocks[], int *block_count, Block* block_to_remove);
+void render_tile(SDL_Renderer* renderer, Tile* tile);
+int snap_to_grid(int coord, int base);
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -33,35 +32,74 @@ int main() {
         GFATAL("Failed to initialize sprites");
     }
 
-    Block blocks[16];
     Sprite* selected_sprite = find_sprite(&sprite_map, "flask_big_green");
-    int block_count = 0;
+    TileMap* tilemap = create_tilemap();
+    SpritePanel* panel = init_panel(&sprite_map);
+    if (panel == NULL) {
+        GWARN("Panel failed to initialize!");
+    }
+
+    SpriteCoord* panel_sprite_coords[MAX_SPRITES];
 
     int quit = 0;
+    int mouse_held_down = 0;
+
     SDL_Event e;
     while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
-                quit = 1;
-            }
-            else if (e.type == SDL_MOUSEBUTTONDOWN) {
-                int snapped_x = snap_to_grid(e.button.x);
-                int snapped_y = snap_to_grid(e.button.y);
+            switch (e.type) {
+                case SDL_QUIT:
+                    quit = 1;
+                    break;
 
-                if (e.button.button == SDL_BUTTON_LEFT) {
-                    blocks[block_count].rect.x = snapped_x;
-                    blocks[block_count].rect.y = snapped_y;
-                    blocks[block_count].sprite = selected_sprite;
-                    blocks[block_count].collidable = 0;
-                    blocks[block_count].layer = 0;
-                    block_count++;
-                }
-                else if (e.button.button == SDL_BUTTON_RIGHT) {
-                    Block* block_to_remove = find_block(blocks, block_count, snapped_x, snapped_y);
-                    if (block_to_remove != NULL) {
-                        remove_block(blocks, &block_count, block_to_remove);
-                    } 
-                }
+                case SDL_MOUSEBUTTONDOWN:
+                    if (e.button.button == SDL_BUTTON_LEFT) {
+                        mouse_held_down = 1;
+
+                        if (e.button.x > PANEL_WIDTH && selected_sprite != NULL) {
+                            int snapped_x = snap_to_grid(e.button.x, 16);
+                            int snapped_y = snap_to_grid(e.button.y, 16);
+                            add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
+                        }
+                        else if (e.button.x < PANEL_WIDTH) {
+                            int snapped_x = snap_to_grid(e.button.x, 21);
+                            int snapped_y = snap_to_grid(e.button.y, 21);
+                            Sprite* clicked_sprite = find_sprite_panel(panel_sprite_coords, snapped_x, snapped_y);
+                            if (clicked_sprite != NULL) {
+                                GINFO("sprite found!");
+                                selected_sprite = clicked_sprite;
+                            } else {
+                                GINFO("%d, %d did not find a sprite", snapped_x, snapped_y);
+                            }
+                        }
+                    }
+
+                    if (e.button.button == SDL_BUTTON_RIGHT) {
+                        int snapped_x = snap_to_grid(e.button.x, 16);
+                        int snapped_y = snap_to_grid(e.button.y, 16);
+                        Tile* tile_to_remove = find_tile_by_coords(tilemap, snapped_x, snapped_y);
+                        if (tile_to_remove != NULL) {
+                            remove_tile(tilemap, tile_to_remove);
+                        } 
+                    }
+                    break;
+
+                case SDL_MOUSEMOTION:
+                    if (mouse_held_down) {
+                        if (e.button.button == SDL_BUTTON_LEFT) {
+                            int snapped_x = snap_to_grid(e.button.x, 16);
+                            int snapped_y = snap_to_grid(e.button.y, 16);
+                            if (snapped_x > PANEL_WIDTH) {
+                                add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
+                            }
+                        }
+                    }
+
+                    break;
+
+                case SDL_MOUSEBUTTONUP:
+                    mouse_held_down = 0;
+                    break;  
             }
         }
 
@@ -69,9 +107,10 @@ int main() {
         SDL_RenderClear(eRenderer);
 
         render_grid(eRenderer);
+        render_panel(eRenderer, spritesheet, panel, selected_sprite);
 
-        for (int i = 0; i < block_count; i++) {
-            render_block(eRenderer, &blocks[i]);
+        for (int i = 0; i < tilemap->count; i++) {
+            render_tile(eRenderer, tilemap->tiles[i]);
         }
 
         SDL_RenderPresent(eRenderer);
@@ -81,12 +120,12 @@ int main() {
     return 0;
 }
 
-void render_block(SDL_Renderer* renderer, Block* block) {
-    SDL_Rect dest = { block->rect.x, block->rect.y, TILE_SIZE, TILE_SIZE };
+void render_tile(SDL_Renderer* renderer, Tile* tile) {
+    SDL_Rect dest = { tile->rect.x, tile->rect.y, TILE_SIZE, TILE_SIZE };
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
-    SDL_RenderCopy(renderer, spritesheet, &block->sprite->rect, &dest);
+    SDL_RenderCopy(renderer, spritesheet, &tile->sprite->rect, &dest);
 }
 
 void render_grid(SDL_Renderer* renderer) {
@@ -101,26 +140,8 @@ void render_grid(SDL_Renderer* renderer) {
     }
 }
 
-Block* find_block(Block blocks[], int block_count, int x, int y) {
-    for (int i = 0; i < block_count; i++) {
-        if (blocks[i].rect.x == x && blocks[i].rect.y == y) {
-            return &blocks[i];
-        }
-    }
-
-    return NULL;
-}
-
-void remove_block(Block blocks[], int *block_count, Block *block_to_remove) {
-    int index = block_to_remove - blocks;
-    if (index >= 0 && index < *block_count) {
-        blocks[index] = blocks[*block_count - 1];
-        (*block_count)--;
-    }
-}
-
-int snap_to_grid(int coord) {
-    return (coord / 16) * 16;
+int snap_to_grid(int coord, int base) {
+    return (coord / base) * base;
 }
 
 void cleanup_editor() {
