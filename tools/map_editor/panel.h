@@ -24,7 +24,7 @@ typedef struct {
 } SpritePanel;
 
 SpritePanel* init_panel(SpriteMap* sprite_map);
-Sprite* find_sprite_panel(SpriteCoord** coords, int x, int y);
+Sprite* find_sprite_panel(SpritePanel* panel, int x, int y);
 void render_panel(SDL_Renderer* renderer,
                   SDL_Texture* spritesheet,
                   SpritePanel* panel, 

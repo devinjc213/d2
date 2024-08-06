@@ -62,9 +62,9 @@ int main() {
                             add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
                         }
                         else if (e.button.x < PANEL_WIDTH) {
-                            int snapped_x = snap_to_grid(e.button.x, 21);
-                            int snapped_y = snap_to_grid(e.button.y, 21);
-                            Sprite* clicked_sprite = find_sprite_panel(panel_sprite_coords, snapped_x, snapped_y);
+                            int snapped_x = snap_to_grid(e.button.x, 21) + PANEL_PADDING;
+                            int snapped_y = snap_to_grid(e.button.y, 21) + PANEL_PADDING;
+                            Sprite* clicked_sprite = find_sprite_panel(panel, snapped_x, snapped_y);
                             if (clicked_sprite != NULL) {
                                 GINFO("sprite found!");
                                 selected_sprite = clicked_sprite;
@@ -103,7 +103,7 @@ int main() {
             }
         }
 
-        SDL_SetRenderDrawColor(eRenderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(eRenderer, 100, 100, 100, 255);
         SDL_RenderClear(eRenderer);
 
         render_grid(eRenderer);

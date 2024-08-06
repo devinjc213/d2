@@ -6,10 +6,20 @@
 
 SpritePanel* init_panel(SpriteMap* sprite_map) {
     SpritePanel* panel = malloc(sizeof(SpritePanel));
-    panel->rect = (SDL_Rect){ 0, 0, PANEL_WIDTH, SCREEN_HEIGHT };
+    if (panel == NULL) {
+        GFATAL("Failed to allocate memory for panel");
+        return NULL;
+    }
+
+    panel->rect = (SDL_Rect){ 0, 0, PANEL_WIDTH, SCREEN_HEIGHT + 15};
     panel->sprite_count = 0;
     panel->selected_sprite = NULL;
-    panel->sprites = malloc(sizeof(SpriteCoord) * sprite_map->count);
+    panel->sprites = malloc(sizeof(SpriteCoord*) * sprite_map->count);
+    if (panel->sprites == NULL) {
+        GFATAL("Failed to allocate memory for panel sprites");
+        free(panel);
+        return NULL;
+    }
 
     GDEBUG("count: %d", sprite_map->count);
 
@@ -24,6 +34,13 @@ SpritePanel* init_panel(SpriteMap* sprite_map) {
         // Check if the sprite name ends with _f followed by a number
         char* last_underscore = strrchr(sprite->name, '_');
         if (last_underscore == NULL || *(last_underscore + 1) != 'f' || !isdigit(*(last_underscore + 2))) {
+            panel->sprites[panel->sprite_count] = malloc(sizeof(SpriteCoord));
+            if (panel->sprites[panel->sprite_count] == NULL) {
+                GERROR("Failed to allocate memory for SpriteCoord");
+                // TODO: Free previously allocated memory
+                return NULL;
+            }
+
             panel->sprites[panel->sprite_count]->sprite = sprite;
             panel->sprites[panel->sprite_count]->x = xOffset;
             panel->sprites[panel->sprite_count]->y = yOffset;
@@ -33,7 +50,7 @@ SpritePanel* init_panel(SpriteMap* sprite_map) {
             xOffset += SPRITE_WIDTH + PANEL_PADDING;
 
             if (xOffset >= PANEL_WIDTH) {
-                xOffset = 0;
+                xOffset = 5;
                 yOffset = yOffset + SPRITE_HEIGHT + PANEL_PADDING;
             }
         }
@@ -43,12 +60,11 @@ SpritePanel* init_panel(SpriteMap* sprite_map) {
     return panel;
 }
 
-Sprite* find_sprite_panel(SpriteCoord** coords, int x, int y) {
-    GDEBUG("x, y: %d, %d", x, y);
-    int buf = 6;
-    //okay i really hate this
-    for (int i = 0; i < MAX_SPRITES; i++) {
-        GDEBUG("testing: %d, %d", coords[i]->x, coords[i]->y);
+Sprite* find_sprite_panel(SpritePanel* panel, int x, int y) {
+    for (int i = 0; i < panel->sprite_count; i++) {
+        if (panel->sprites[i]->x == x && panel->sprites[i]->y == y) {
+            return panel->sprites[i]->sprite;
+        }
     }
 
     return NULL;
