@@ -24,10 +24,16 @@ typedef struct {
 } SpritePanel;
 
 SpritePanel* init_panel(SpriteMap* sprite_map);
+
 Sprite* find_sprite_panel(SpritePanel* panel, int x, int y);
+
+int compare_sprites(const void* a, const void* b);
+
 void render_panel(SDL_Renderer* renderer,
                   SDL_Texture* spritesheet,
                   SpritePanel* panel, 
                   Sprite* selected_sprite);
+
+void free_panel(SpritePanel* panel);
 
 #endif

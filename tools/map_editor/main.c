@@ -2,19 +2,16 @@
 #include <SDL2/SDL_image.h>
 #include "defs.h"
 #include "../../shared/logger.h"
-#include "../../shared/kiss_sdl.h"
 #include "tilemap.h"
 #include "panel.h"
-
+#include "../../shared/tilesheet.h"
 
 SDL_Window* eWindow;
 SDL_Renderer* eRenderer;
 void cleanup_editor();
-kiss_array objects, a1, a2;
-kiss_window window1, window2;
 void render_grid(SDL_Renderer* renderer);
 void render_tile(SDL_Renderer* renderer, Tile* tile);
-int snap_to_grid(int coord, int base);
+int snap_to_grid(int coord, int tile_size);
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -25,21 +22,26 @@ int main() {
         return 1;
     }
 
-    SDL_Window* eWindow = SDL_CreateWindow("Tilemap Editor", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    SDL_Window* eWindow = SDL_CreateWindow("Tilemap Editor",
+                                           SDL_WINDOWPOS_UNDEFINED,
+                                           SDL_WINDOWPOS_UNDEFINED,
+                                           SCREEN_WIDTH,
+                                           SCREEN_HEIGHT,
+                                           SDL_WINDOW_SHOWN);
+
     SDL_Renderer* eRenderer = SDL_CreateRenderer(eWindow, -1, SDL_RENDERER_ACCELERATED);
 
     if (init_sprites(eRenderer, "../../assets/tileset.png", "../../tile_coords") > 0) {
         GFATAL("Failed to initialize sprites");
     }
 
-    Sprite* selected_sprite = find_sprite(&sprite_map, "flask_big_green");
+    SDL_Texture* tilesheet = load_tilesheet(eRenderer, MOUNTAINS);
+    Sprite* selected_sprite = NULL;
     TileMap* tilemap = create_tilemap();
     SpritePanel* panel = init_panel(&sprite_map);
     if (panel == NULL) {
         GWARN("Panel failed to initialize!");
     }
-
-    SpriteCoord* panel_sprite_coords[MAX_SPRITES];
 
     int quit = 0;
     int mouse_held_down = 0;
@@ -59,17 +61,15 @@ int main() {
                         if (e.button.x > PANEL_WIDTH && selected_sprite != NULL) {
                             int snapped_x = snap_to_grid(e.button.x, 16);
                             int snapped_y = snap_to_grid(e.button.y, 16);
-                            add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
+                            add_tile(tilemap, snapped_x, snapped_y, selected_sprite, 0, 0);
                         }
                         else if (e.button.x < PANEL_WIDTH) {
+                            // add padding to account for 5 offset from start
                             int snapped_x = snap_to_grid(e.button.x, 21) + PANEL_PADDING;
                             int snapped_y = snap_to_grid(e.button.y, 21) + PANEL_PADDING;
                             Sprite* clicked_sprite = find_sprite_panel(panel, snapped_x, snapped_y);
                             if (clicked_sprite != NULL) {
-                                GINFO("sprite found!");
                                 selected_sprite = clicked_sprite;
-                            } else {
-                                GINFO("%d, %d did not find a sprite", snapped_x, snapped_y);
                             }
                         }
                     }
@@ -90,7 +90,7 @@ int main() {
                             int snapped_x = snap_to_grid(e.button.x, 16);
                             int snapped_y = snap_to_grid(e.button.y, 16);
                             if (snapped_x > PANEL_WIDTH) {
-                                add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
+                                add_tile(tilemap, snapped_x, snapped_y, selected_sprite, 0, 0);
                             }
                         }
                     }
@@ -116,6 +116,8 @@ int main() {
         SDL_RenderPresent(eRenderer);
     }
 
+    free_tilemap(tilemap);
+    free_panel(panel);
     cleanup_editor();
     return 0;
 }
@@ -140,8 +142,8 @@ void render_grid(SDL_Renderer* renderer) {
     }
 }
 
-int snap_to_grid(int coord, int base) {
-    return (coord / base) * base;
+int snap_to_grid(int coord, int tile_size) {
+    return (coord / tile_size) * tile_size;
 }
 
 void cleanup_editor() {
