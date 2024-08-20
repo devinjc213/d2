@@ -70,6 +70,16 @@ Sprite* find_sprite_panel(SpritePanel* panel, int x, int y) {
     return NULL;
 }
 
+int compare_sprites(const void* a, const void* b) {
+    const SpriteCoord* sprite_a = *(const SpriteCoord**)a;
+    const SpriteCoord* sprite_b = *(const SpriteCoord**)b;
+    
+    int area_a = sprite_a->sprite->rect.w * sprite_a->sprite->rect.h;
+    int area_b = sprite_b->sprite->rect.w * sprite_b->sprite->rect.h;
+    
+    return area_a - area_b;
+}
+
 void render_panel(SDL_Renderer* renderer,
                   SDL_Texture* spritesheet,
                   SpritePanel* panel,
@@ -77,18 +87,38 @@ void render_panel(SDL_Renderer* renderer,
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderFillRect(renderer, &panel->rect);
 
+    qsort(panel->sprites, panel->sprite_count, sizeof(SpriteCoord*), compare_sprites);
+
+    int current_y = panel->rect.y;
+
+    // Render sprites in the sorted order, stacking them vertically
     for (int i = 0; i < panel->sprite_count; i++) {
-        Sprite* sprite = panel->sprites[i]->sprite;
-        int x = panel->sprites[i]->x;
-        int y = panel->sprites[i]->y;
-
-        SDL_Rect dest = { x, y, SPRITE_WIDTH, SPRITE_HEIGHT };
-
+        SpriteCoord* coord = panel->sprites[i];
+        Sprite* sprite = coord->sprite;
+        
+        SDL_Rect dest = { 
+            panel->rect.x, 
+            current_y, 
+            sprite->rect.w, 
+            sprite->rect.h 
+        };
+        
         SDL_RenderCopy(renderer, spritesheet, &sprite->rect, &dest);
-
-        if (sprite == selected_sprite) {
+        
+        if (sprite == panel->selected_sprite) {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
             SDL_RenderDrawRect(renderer, &dest);
         }
+
+        current_y += sprite->rect.h + 5; // 5 pixel gap between sprites
     }
+}
+
+void free_panel(SpritePanel* panel) {
+    for (int i = 0; i < panel->sprite_count; i++) {
+        free(panel->sprites[i]);
+    }
+
+    free(panel->sprites);
+    free(panel);
 }

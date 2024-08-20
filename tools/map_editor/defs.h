@@ -1,5 +1,5 @@
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 736
+#define SCREEN_WIDTH 1600
+#define SCREEN_HEIGHT 900
 
 #define TILE_SIZE 16
 

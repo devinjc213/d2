@@ -13,7 +13,7 @@ TileMap* create_tilemap() {
     return map;
 }
 
-int add_tile(TileMap* tilemap, int x, int y, Sprite* sprite) {
+int add_tile(TileMap* tilemap, int x, int y, Sprite* sprite, int collidable, int layer) {
     if (tilemap->count >= tilemap->max_size) {
         GWARN("Reached maximum tile limit");
         return 1;
@@ -21,7 +21,8 @@ int add_tile(TileMap* tilemap, int x, int y, Sprite* sprite) {
 
     // check for existing tile in this location first
     // if a different sprite, we can just update the same block
-    // reminder: add other tile props when I get there
+    //
+    // Bug/feature: will still paint over the last tile
     Tile* found_tile = find_tile_by_coords(tilemap, x, y);
     if (found_tile != NULL && found_tile->sprite != sprite) {
         found_tile->sprite = sprite;
@@ -32,6 +33,8 @@ int add_tile(TileMap* tilemap, int x, int y, Sprite* sprite) {
     new_tile->sprite = sprite;
     new_tile->rect.x = x;
     new_tile->rect.y = y;
+    new_tile->collidable = collidable;
+    new_tile->layer = layer;
     tilemap->tiles[tilemap->count++] = new_tile;
     return 0;
 }
