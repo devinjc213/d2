@@ -3,6 +3,7 @@
 #include "tilemap.h"
 #include "../../shared/logger.h"
 #include "defs.h"
+#include "texture_cache.h"
 
 TileMap* create_tilemap(int height, int width, int layers) {
     TileMap* map = malloc(sizeof(TileMap));
@@ -44,3 +45,9 @@ void add_prop_tile(TileMap* map, PropTile props) {
 }
 
 
+void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache) {
+    for (int i = 0; i < layer->count; i++) {
+        SDL_Texture* texture = get_texture(cache, renderer, layer->tiles[i].tilesheet);
+        SDL_RenderCopy(renderer, texture, &layer->tiles[i].src, &layer->tiles[i].dest);
+    }
+}

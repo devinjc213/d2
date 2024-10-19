@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -std=c11
 LDFLAGS = -lSDL2 -lSDL2_image -lm
 
 TARGET = dozy_tiler 
-SRCS = main.c tilemap.c tilesheet.c texture_cache.c ../../shared/logger.c ../../shared/sprite.c 
+SRCS = main.c editor.c tilemap.c tilesheet.c texture_cache.c ../../shared/logger.c ../../shared/sprite.c 
 ASSETS_DIR = ../../assets/Tilesets
 BIN_DIR = bin
 

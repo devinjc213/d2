@@ -21,11 +21,9 @@ SDL_Texture* load_texture(TextureCache* cache, SDL_Renderer* renderer, tilesheet
 
 SDL_Texture* get_texture(TextureCache* cache, SDL_Renderer* renderer, tilesheet_t tilesheet) {
     if (cache->loaded[tilesheet] == 1) {
-        GINFO("Cache hit");
         return cache->textures[tilesheet];
     }
 
-    GINFO("Cache miss");
     return load_texture(cache, renderer, tilesheet);
 }
 

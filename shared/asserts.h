@@ -1,9 +1,9 @@
 #pragma once
 
 // comment to disable
-#define GASSERTIONS_ENABLED
+#define DASSERTIONS_ENABLED
 
-#ifdef GASSERTIONS_ENABLED
+#ifdef DASSERTIONS_ENABLED
 
 void report_assertion_failure(const char* expression,
                               const char* message,
@@ -12,7 +12,7 @@ void report_assertion_failure(const char* expression,
 
 #define debugBreak() __builtin_trap()
 
-#define GASSERT(expr) \
+#define DASSERT(expr) \
   { \
       if (expr) { \
       } else { \
@@ -21,7 +21,7 @@ void report_assertion_failure(const char* expression,
       } \
   }
 
-#define GASSERT_MSG(expr, message) \
+#define DASSERT_MSG(expr, message) \
   { \
       if (expr) { \
       } else { \
@@ -31,7 +31,7 @@ void report_assertion_failure(const char* expression,
   }
 
 #ifdef _DEBUG
-#define GASSERT_DEBUG(expr) \
+#define DASSERT_DEBUG(expr) \
   { \
       if (expr) { \
       } else { \
@@ -40,10 +40,10 @@ void report_assertion_failure(const char* expression,
       } \
   }
 #else
-#define GASSERT_DEBUG(expr)
+#define DASSERT_DEBUG(expr)
 #endif
 
 #else
-#define GASSERT(expr)
-#define GASSERT_MSG(expr, message)
+#define DASSERT(expr)
+#define DASSERT_MSG(expr, message)
 #endif

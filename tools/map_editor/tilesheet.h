@@ -50,6 +50,7 @@ typedef enum {
 typedef struct {
   tilesheet_t tilesheet;
   SDL_Rect rect;
+  int active_selection;
 } SelectionBuffer;
 
 SDL_Texture* load_tilesheet(SDL_Renderer* renderer, tilesheet_t filename, int* width, int* height, int* totalSheets);
