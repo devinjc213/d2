@@ -81,10 +81,19 @@ void init_tile_map(Editor* e) {
 
 void init_settings(Editor* e) {
     GINFO("Initializing settings...");
+    e->e_zoom.offset_x = 0;
+    e->e_zoom.offset_y = 0;
+    e->e_zoom.scale = 1.0f;
+    e->t_zoom.offset_x = 0;
+    e->t_zoom.offset_y = 0;
+    e->t_zoom.scale = 1.0f;
     e->e_select_m_x = 0;
     e->e_select_m_y = 0;
     e->t_select_m_x = 0;
     e->t_select_m_y = 0;
+    e->t_cur_mm_x = 0;
+    e->t_cur_mm_y = 0;
+    e->t_mm_pressed = 0;
     e->e_cur_m_x = 0;
     e->e_cur_m_y = 0;
     e->t_cur_m_x = 0;
@@ -96,4 +105,57 @@ void init_settings(Editor* e) {
     e->settings.render_layer_2 = 1;
     e->settings.render_layer_3 = 1;
     GINFO("Settings initialized");
+}
+
+void i_screen_to_tilesheet(Editor* e,
+                           int zoom_x,
+                           int zoom_y,
+                           float scale,
+                           int screen_x,
+                           int screen_y,
+                           int* tile_x,
+                           int* tile_y) {
+    *tile_x = (screen_x - zoom_x) / scale;
+    *tile_y = (screen_y - zoom_y) / scale;
+
+    //clamp
+    *tile_x = (*tile_x < 0) ? 0 : (*tile_x >= e->t_w) ? e->t_w - 1 : *tile_x;
+    *tile_y = (*tile_y < 0) ? 0 : (*tile_y >= e->t_h) ? e->t_h - 1 : *tile_y;
+}
+
+void r_tilesheet_to_screen(Editor* e,
+                           int zoom_x,
+                           int zoom_y,
+                           float scale,
+                           int tile_x,
+                           int tile_y,
+                           int* screen_x,
+                           int* screen_y) {
+    *screen_x = (tile_x * scale) + zoom_x;
+    *screen_y = (tile_y * scale) + zoom_y;
+}
+
+int snap_to_grid2(int coord, float scale) {
+    float scaled_tile = TILE_SIZE * scale;
+
+    return (int)(floorf(coord / scaled_tile) * scaled_tile);
+}
+
+void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y) {
+    float old_scale = z->scale;
+    z->scale = new_scale;
+
+    float world_x = (m_x - z->offset_x) / old_scale;
+    float world_y = (m_y - z->offset_y) / old_scale;
+
+    z->offset_x = snap_to_grid2(m_x - (world_x * new_scale), new_scale);
+    z->offset_y = snap_to_grid2(m_y - (world_y * new_scale), new_scale);
+
+    if (fabsf(new_scale - 1.0f) < 0.001f) {
+        z->offset_x = 0;
+        z->offset_y = 0;
+    }
+
+    GINFO("%f", new_scale);
+    GINFO("offset x: %f, y: %f, scale: %f", z->offset_x, z->offset_y, z->scale);
 }

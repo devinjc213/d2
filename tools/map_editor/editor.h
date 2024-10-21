@@ -1,6 +1,9 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
+
 #include <SDL2/SDL.h>
 #include "texture_cache.h"
 #include "tilemap.h"
@@ -12,6 +15,11 @@ typedef struct {
   int render_layer_2;
   int render_layer_3;
 } EditorSettings;
+
+typedef struct {
+  float offset_x, offset_y;
+  float scale;
+} ZoomState;
 
 typedef struct {
   int quit;
@@ -29,6 +37,9 @@ typedef struct {
 
   TileMap* tile_map;
 
+  ZoomState e_zoom;
+  ZoomState t_zoom;
+
   int mouse_held_down;
 
   int e_cur_m_x;
@@ -40,7 +51,11 @@ typedef struct {
   int t_cur_m_y;
   int t_select_m_x;
   int t_select_m_y;
-  
+
+  int t_cur_mm_x;
+  int t_cur_mm_y;
+  int t_mm_pressed;
+
   int e_x;
   int e_y;
   int e_w;
@@ -74,5 +89,26 @@ void init_cache(Editor* e);
 void init_textures(Editor* e);
 void init_tile_map(Editor* e);
 void init_settings(Editor* e);
+int snap_to_grid2(int coord, float scale);
+
+//input
+void i_screen_to_tilesheet(Editor* e,
+                           int zoom_x,
+                           int zoom_y,
+                           float scale,
+                           int screen_x,
+                           int screen_y,
+                           int* tile_x,
+                           int* tile_y);
+//rendering
+void r_tilesheet_to_screen(Editor* e,
+                           int zoom_x,
+                           int zoom_y,
+                           float scale,
+                           int tile_x,
+                           int tile_y,
+                           int* screen_x,
+                           int* screen_y);
+void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y);
 
 #endif
