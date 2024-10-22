@@ -128,7 +128,7 @@ int main() {
             SDL_RenderDrawRect(editor->t_render, &selection);
         }
 
-        if (editor->select_buf->active_selection) {
+        if (editor->select_buf.active_selection) {
             SDL_SetRenderDrawBlendMode(editor->t_render, SDL_BLENDMODE_BLEND);
             SDL_SetRenderDrawColor(editor->t_render, 0, 0, 255, 100);
             int scaled_x, scaled_y;
@@ -136,16 +136,16 @@ int main() {
                                   editor->t_zoom.offset_x,
                                   editor->t_zoom.offset_y,
                                   editor->t_zoom.scale,
-                                  editor->select_buf->rect.x,
-                                  editor->select_buf->rect.y,
+                                  editor->select_buf.rect.x,
+                                  editor->select_buf.rect.y,
                                   &scaled_x,
                                   &scaled_y);
 
             SDL_Rect selection = {
                 scaled_x,
                 scaled_y,
-                editor->select_buf->rect.w * editor->t_zoom.scale,
-                editor->select_buf->rect.h * editor->t_zoom.scale
+                editor->select_buf.rect.w * editor->t_zoom.scale,
+                editor->select_buf.rect.h * editor->t_zoom.scale
             };
             SDL_RenderFillRect(editor->t_render, &selection);
             SDL_RenderDrawRect(editor->t_render, &selection);
@@ -158,11 +158,11 @@ int main() {
             int snapX = snap_to_grid(editor->e_mouse.x, editor->e_zoom.scale);
             int snapY = snap_to_grid(editor->e_mouse.y, editor->e_zoom.scale);
 
-            SDL_Rect dest = {snapX, snapY, editor->select_buf->rect.w, editor->select_buf->rect.h};
-            if (editor->cur_e_sheet != NULL && editor->select_buf->active_selection) {
+            SDL_Rect dest = {snapX, snapY, editor->select_buf.rect.w, editor->select_buf.rect.h};
+            if (editor->cur_e_sheet != NULL && editor->select_buf.active_selection) {
                 SDL_SetRenderDrawBlendMode(editor->e_render, SDL_BLENDMODE_BLEND);
                 SDL_SetRenderDrawColor(editor->e_render, 0, 0, 255, 100);
-                SDL_RenderCopy(editor->e_render, editor->cur_e_sheet, &editor->select_buf->rect, &dest);
+                SDL_RenderCopy(editor->e_render, editor->cur_e_sheet, &editor->select_buf.rect, &dest);
                 SDL_RenderFillRect(editor->e_render, &dest);
                 SDL_RenderDrawRect(editor->e_render, &dest);
             }

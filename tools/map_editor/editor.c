@@ -159,7 +159,6 @@ static void init_tile_map(Editor* e) {
     GINFO("Initializing tile map...");
     e->tile_map = malloc(sizeof(TileMap));
     e->tile_map = create_tilemap(64, 64, 3);
-    e->select_buf = malloc(sizeof(SelectionBuffer));
     GINFO("Tile map initialized");
 }
 
@@ -171,6 +170,13 @@ static void init_settings(Editor* e) {
     e->t_zoom.offset_x = 0;
     e->t_zoom.offset_y = 0;
     e->t_zoom.scale = 1.0f;
+
+    e->select_buf.rect.x = 0;
+    e->select_buf.rect.y = 0;
+    e->select_buf.rect.w = 0;
+    e->select_buf.rect.h = 0;
+    e->select_buf.tilesheet = 0;
+    e->select_buf.active_selection = 0;
 
     e->e_mouse.x = 0;
     e->e_mouse.y = 0;

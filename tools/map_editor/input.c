@@ -26,12 +26,12 @@ void handle_input(SDL_Event* e, Editor* editor) {
 static void handle_any_input(SDL_Event* e, Editor* editor) {
     switch (e->type) {
         case SDL_KEYDOWN:
-            if (e->key.keysym.sym == SDLK_ESCAPE && editor->select_buf->active_selection == 1) {
-                editor->select_buf->active_selection = 0;
-                editor->select_buf->rect.x = 0;
-                editor->select_buf->rect.x = 0;
-                editor->select_buf->rect.x = 0;
-                editor->select_buf->rect.x = 0;
+            if (e->key.keysym.sym == SDLK_ESCAPE && editor->select_buf.active_selection == 1) {
+                editor->select_buf.active_selection = 0;
+                editor->select_buf.rect.x = 0;
+                editor->select_buf.rect.x = 0;
+                editor->select_buf.rect.x = 0;
+                editor->select_buf.rect.x = 0;
             }
 
             break;
@@ -46,13 +46,13 @@ static void handle_editor_input(SDL_Event* e, Editor* editor) {
             SDL_Rect dest = {
                 snap_to_grid(editor->e_mouse.click_x, editor->e_zoom.scale),
                 snap_to_grid(editor->e_mouse.click_y, editor->e_zoom.scale),
-                editor->select_buf->rect.w,
-                editor->select_buf->rect.h
+                editor->select_buf.rect.w,
+                editor->select_buf.rect.h
             };
 
             RenderTile tile = {
                 .layer = editor->settings.layer,
-                .src = editor->select_buf->rect,
+                .src = editor->select_buf.rect,
                 .dest =  dest,
                 .tilesheet = editor->cur_sheet_index
             };
@@ -156,9 +156,9 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
             int snapCY = snap_to_grid(editor->t_mouse.y, 1.0f);
             SDL_Rect selection = {snapBX, snapBY, snapCX - snapBX, snapCY - snapBY};
 
-            editor->select_buf->rect = selection;
-            editor->select_buf->tilesheet = editor->cur_sheet_index;
-            editor->select_buf->active_selection = 1;
+            editor->select_buf.rect = selection;
+            editor->select_buf.tilesheet = editor->cur_sheet_index;
+            editor->select_buf.active_selection = 1;
             editor->t_mouse.click_x = 0;
             editor->t_mouse.click_y = 0;
 

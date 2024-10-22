@@ -76,7 +76,7 @@ typedef struct {
   SDL_Texture* cur_e_sheet;
   SDL_Texture* cur_t_sheet;
 
-  SelectionBuffer* select_buf;
+  SelectionBuffer select_buf;
 
   EditorSettings settings;
 } Editor;
