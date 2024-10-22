@@ -22,6 +22,16 @@ typedef struct {
 } ZoomState;
 
 typedef struct {
+  int x;
+  int y;
+  int click_x;
+  int click_y;
+  int left_pressed;
+  int middle_pressed;
+  int right_pressed;
+} MouseState;
+
+typedef struct {
   int quit;
 
   SDL_Window* e_win;
@@ -42,19 +52,9 @@ typedef struct {
 
   int mouse_held_down;
 
-  int e_cur_m_x;
-  int e_cur_m_y;
-  int e_select_m_x;
-  int e_select_m_y;
-  
-  int t_cur_m_x;
-  int t_cur_m_y;
-  int t_select_m_x;
-  int t_select_m_y;
-
-  int t_cur_mm_x;
-  int t_cur_mm_y;
-  int t_mm_pressed;
+  MouseState e_mouse;
+  MouseState t_mouse;
+  MouseState s_mouse;
 
   int e_x;
   int e_y;
@@ -83,12 +83,6 @@ typedef struct {
 
 
 void init_editor(Editor* e);
-void init_windows(Editor* e);
-void init_renderers(Editor* e);
-void init_cache(Editor* e);
-void init_textures(Editor* e);
-void init_tile_map(Editor* e);
-void init_settings(Editor* e);
 int snap_to_grid2(int coord, float scale);
 
 //input
@@ -110,5 +104,8 @@ void r_tilesheet_to_screen(Editor* e,
                            int* screen_x,
                            int* screen_y);
 void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y);
+SDL_bool is_window_focused(SDL_Window* window);
+int snap_to_grid(int coord, float scale);
+void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale);
 
 #endif
