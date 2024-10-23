@@ -12,6 +12,7 @@
 #include "../../shared/nuklear_sdl_renderer.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "editor.h"
 #include "defs.h"
 #include "../../shared/logger.h"
@@ -118,6 +119,8 @@ void render_editor_win(Editor* e) {
     SDL_RenderClear(e->e_render);
 
     render_layer(&e->tile_map->render_layers[0], e->e_render, e->e_cache);
+    render_layer(&e->tile_map->render_layers[1], e->e_render, e->e_cache);
+    render_layer(&e->tile_map->render_layers[2], e->e_render, e->e_cache);
 
     render_grid(e->e_render, e->e_zoom.offset_x, e->e_zoom.offset_y, e->e_zoom.scale);
 
@@ -228,6 +231,18 @@ void render_settings_win(Editor* e) {
 
     nk_sdl_render(NK_ANTI_ALIASING_ON);
     SDL_RenderPresent(e->s_render);
+}
+
+void cleanup_editor(Editor* e) {
+    SDL_DestroyRenderer(e->e_render);
+    SDL_DestroyRenderer(e->t_render);
+    SDL_DestroyRenderer(e->s_render);
+    SDL_DestroyWindow(e->e_win);
+    SDL_DestroyWindow(e->t_win);
+    SDL_DestroyWindow(e->s_win);
+
+    IMG_Quit();
+    SDL_Quit();
 }
 
 static void init_windows(Editor* e) {

@@ -42,6 +42,10 @@ static void handle_any_input(SDL_Event* e, Editor* editor) {
 
 static void handle_editor_input(SDL_Event* e, Editor* editor) {
     switch (e->type) {
+        case SDL_MOUSEWHEEL:
+            handle_mousewheel(e, &editor->e_zoom);
+            break;
+
         case SDL_MOUSEBUTTONDOWN:
             SDL_GetMouseState(&editor->e_mouse.click_x, &editor->e_mouse.click_y);
 

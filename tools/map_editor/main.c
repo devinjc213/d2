@@ -5,8 +5,6 @@
 #include "editor.h"
 #include "input.h"
 
-void cleanup_editor(Editor* editor);
-
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         return 1;
@@ -39,14 +37,3 @@ int main() {
     return 0;
 }
 
-void cleanup_editor(Editor* editor) {
-    SDL_DestroyRenderer(editor->e_render);
-    SDL_DestroyRenderer(editor->t_render);
-    SDL_DestroyRenderer(editor->s_render);
-    SDL_DestroyWindow(editor->e_win);
-    SDL_DestroyWindow(editor->t_win);
-    SDL_DestroyWindow(editor->s_win);
-
-    IMG_Quit();
-    SDL_Quit();
-}

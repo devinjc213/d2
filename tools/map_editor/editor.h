@@ -86,7 +86,7 @@ typedef struct {
 
 
 void init_editor(Editor* e);
-int snap_to_grid2(int coord, float scale);
+void cleanup_editor(Editor* e);
 
 //input
 void screen_to_tilesheet(Editor* e,
