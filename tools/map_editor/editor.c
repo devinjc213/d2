@@ -319,6 +319,7 @@ static void init_tile_map(Editor* e) {
 }
 
 static void init_settings(Editor* e) {
+    // TODO use memcpy?
     GINFO("Initializing settings...");
     e->e_zoom.offset_x = 0;
     e->e_zoom.offset_y = 0;
