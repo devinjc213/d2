@@ -1,7 +1,21 @@
+#define NK_IMPLEMENTATION
+#define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_STANDARD_VARARGS
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+#define NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_DEFAULT_FONT
+#include "../../shared/nuklear.h"
+
+#define NK_SDL_RENDERER_IMPLEMENTATION
+#include "../../shared/nuklear_sdl_renderer.h"
+
 #include <SDL2/SDL.h>
 #include "editor.h"
 #include "defs.h"
 #include "../../shared/logger.h"
+#include "../../shared/asserts.h"
 
 static void init_windows(Editor* e);
 static void init_renderers(Editor* e);
@@ -9,6 +23,7 @@ static void init_cache(Editor* e);
 static void init_textures(Editor* e);
 static void init_tile_map(Editor* e);
 static void init_settings(Editor* e);
+static void init_nuklear(Editor* e);
 //TODO: check for errors lol
 
 void init_editor(Editor* e) {
@@ -18,9 +33,10 @@ void init_editor(Editor* e) {
     init_textures(e);
     init_tile_map(e);
     init_settings(e);
+    init_nuklear(e);
 }
 
-void i_screen_to_tilesheet(Editor* e,
+void screen_to_tilesheet(Editor* e,
                            int zoom_x,
                            int zoom_y,
                            float scale,
@@ -36,8 +52,7 @@ void i_screen_to_tilesheet(Editor* e,
     *tile_y = (*tile_y < 0) ? 0 : (*tile_y >= e->t_h) ? e->t_h - 1 : *tile_y;
 }
 
-void r_tilesheet_to_screen(Editor* e,
-                           int zoom_x,
+void tilesheet_to_screen(int zoom_x,
                            int zoom_y,
                            float scale,
                            int tile_x,
@@ -96,6 +111,123 @@ void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale
     for (float y = start_y; y < SCREEN_HEIGHT; y += tile_size_scaled) {
         SDL_RenderDrawLine(renderer, 0, (int)y, SCREEN_WIDTH, (int)y);
     }
+}
+
+void render_editor_win(Editor* e) {
+    SDL_SetRenderDrawColor(e->e_render, 100, 100, 100, 255);
+    SDL_RenderClear(e->e_render);
+
+    render_layer(&e->tile_map->render_layers[0], e->e_render, e->e_cache);
+
+    render_grid(e->e_render, e->e_zoom.offset_x, e->e_zoom.offset_y, e->e_zoom.scale);
+
+    if (e->select_buf.active_selection) {
+        int snapX = snap_to_grid(e->e_mouse.x, e->e_zoom.scale);
+        int snapY = snap_to_grid(e->e_mouse.y, e->e_zoom.scale);
+
+        DASSERT(e->cur_e_sheet != NULL);
+        SDL_Rect dest = {snapX, snapY, e->select_buf.rect.w, e->select_buf.rect.h};
+        SDL_SetRenderDrawBlendMode(e->e_render, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(e->e_render, 0, 0, 255, 100);
+        SDL_RenderCopy(e->e_render, e->cur_e_sheet, &e->select_buf.rect, &dest);
+        SDL_RenderFillRect(e->e_render, &dest);
+        SDL_RenderDrawRect(e->e_render, &dest);
+    }
+
+    SDL_RenderPresent(e->e_render);
+}
+
+void render_tilesheet_win(Editor* e) {
+    SDL_SetRenderDrawColor(e->t_render, 100, 100, 100, 255);
+    SDL_RenderClear(e->t_render);
+    SDL_RenderSetScale(e->t_render, 1.0f, 1.0f);
+
+    SDL_Rect src_rect = {0, 0, e->t_w, e->t_h};
+    SDL_Rect t_zoom = {
+        e->t_zoom.offset_x,
+        e->t_zoom.offset_y,
+        e->t_w * e->t_zoom.scale,
+        e->t_h * e->t_zoom.scale
+    };
+    SDL_RenderCopy(e->t_render, e->cur_t_sheet, &src_rect, &t_zoom);
+
+    // draw active selection while selecting
+    if (is_window_focused(e->t_win) && e->t_mouse.left_pressed == 1) {
+        int scaled_cur_x, scaled_cur_y, scaled_select_x, scaled_select_y;
+        tilesheet_to_screen(e->t_zoom.offset_x,
+                            e->t_zoom.offset_y,
+                            e->t_zoom.scale,
+                            e->t_mouse.x,
+                            e->t_mouse.y,
+                            &scaled_cur_x,
+                            &scaled_cur_y);
+        tilesheet_to_screen(e->t_zoom.offset_x,
+                            e->t_zoom.offset_y,
+                            e->t_zoom.scale,
+                            e->t_mouse.click_x,
+                            e->t_mouse.click_y,
+                            &scaled_select_x,
+                            &scaled_select_y);
+        int snapBX = snap_to_grid(scaled_select_x, e->t_zoom.scale);
+        int snapBY = snap_to_grid(scaled_select_y, e->t_zoom.scale);
+        int snapCX = snap_to_grid(scaled_cur_x, e->t_zoom.scale);
+        int snapCY = snap_to_grid(scaled_cur_y, e->t_zoom.scale);
+        SDL_SetRenderDrawBlendMode(e->t_render, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(e->t_render, 0, 0, 255, 100);
+        SDL_Rect selection = {snapBX, snapBY, snapCX - snapBX, snapCY - snapBY};
+        SDL_RenderFillRect(e->t_render, &selection);
+        SDL_RenderDrawRect(e->t_render, &selection);
+    }
+
+    if (e->select_buf.active_selection) {
+        SDL_SetRenderDrawBlendMode(e->t_render, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(e->t_render, 0, 0, 255, 100);
+        int scaled_x, scaled_y;
+        tilesheet_to_screen(e->t_zoom.offset_x,
+                            e->t_zoom.offset_y,
+                            e->t_zoom.scale,
+                            e->select_buf.rect.x,
+                            e->select_buf.rect.y,
+                            &scaled_x,
+                            &scaled_y);
+
+        SDL_Rect selection = {
+            scaled_x,
+            scaled_y,
+            e->select_buf.rect.w * e->t_zoom.scale,
+            e->select_buf.rect.h * e->t_zoom.scale
+        };
+        SDL_RenderFillRect(e->t_render, &selection);
+        SDL_RenderDrawRect(e->t_render, &selection);
+    }
+
+    render_grid(e->t_render, e->t_zoom.offset_x, e->t_zoom.offset_y, e->t_zoom.scale);
+    
+    SDL_RenderPresent(e->t_render);
+}
+
+void render_settings_win(Editor* e) {
+    SDL_SetRenderDrawColor(e->s_render, 100, 100, 100, 255);
+    SDL_RenderClear(e->s_render);
+
+    if (nk_begin(e->nk_ctx,
+                    "Settings",
+                    nk_rect(0, 0, 300, 768),
+                    NK_WINDOW_BORDER|NK_WINDOW_TITLE)
+    ) {
+        nk_layout_row_dynamic(e->nk_ctx, 30, 3);
+        if (nk_option_label(e->nk_ctx, "Layer 1", e->settings.layer == 0)) e->settings.layer = 0;
+        if (nk_option_label(e->nk_ctx, "Layer 2", e->settings.layer == 1)) e->settings.layer = 1;
+        if (nk_option_label(e->nk_ctx, "Layer 3", e->settings.layer == 2)) e->settings.layer = 2;
+
+        nk_layout_row_dynamic(e->nk_ctx, 30, 1);
+        nk_bool check = e->settings.collidable;
+        if(nk_checkbox_label(e->nk_ctx, "Collidable", &check)) e->settings.collidable = check;
+    }
+    nk_end(e->nk_ctx);
+
+    nk_sdl_render(NK_ANTI_ALIASING_ON);
+    SDL_RenderPresent(e->s_render);
 }
 
 static void init_windows(Editor* e) {
@@ -208,4 +340,12 @@ static void init_settings(Editor* e) {
     e->settings.render_layer_2 = 1;
     e->settings.render_layer_3 = 1;
     GINFO("Settings initialized");
+}
+
+static void init_nuklear(Editor* e) {
+    GINFO("Initilizing nuklear...");
+    e->nk_ctx = nk_sdl_init(e->s_win, e->s_render);
+    nk_sdl_font_stash_begin(&e->nk_atlas);
+    nk_sdl_font_stash_end();
+    GINFO("nuklear initialized");
 }

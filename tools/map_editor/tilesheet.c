@@ -79,8 +79,6 @@ SDL_Texture* load_tilesheet_only(SDL_Renderer* renderer, tilesheet_t file_path) 
     return tilesheet;
 }
 
-void render_panel_tilesheet(SDL_Renderer* renderer) {}
-
 void free_tilesheet(SDL_Texture* tilesheet) {
     free(tilesheet);
 }

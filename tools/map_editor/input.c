@@ -1,3 +1,5 @@
+#include "../../shared/nuklear.h"
+#include "../../shared/nuklear_sdl_renderer.h"
 #include "input.h"
 #include "editor.h"
 
@@ -19,7 +21,7 @@ void handle_input(SDL_Event* e, Editor* editor) {
     } else if (is_window_focused(editor->t_win)) {
         handle_tilesheet_input(e, editor);
     } else if (is_window_focused(editor->s_win)) {
-        //handle_settings_input(e, editor);
+        handle_settings_input(e, editor);
     }
 }
 
@@ -96,7 +98,7 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 
             SDL_GetMouseState(&editor->t_mouse.click_x, &editor->t_mouse.click_y);
             int start_tile_x, start_tile_y;
-            i_screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor, 
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -114,7 +116,7 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
             int cur_x, cur_y, translate_x, translate_y;
             SDL_GetMouseState(&cur_x, &cur_y);
 
-            i_screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor, 
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -139,7 +141,7 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 
             int cur_x, cur_y, translate_x, translate_y;
             SDL_GetMouseState(&cur_x, &cur_y);
-            i_screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor, 
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -185,6 +187,12 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 
             break;
     }
+}
+
+static void handle_settings_input(SDL_Event* e, Editor* editor) {
+    nk_input_begin(editor->nk_ctx);
+    nk_sdl_handle_event(e);
+    nk_input_end(editor->nk_ctx);
 }
 
 static void handle_mousewheel(SDL_Event* e, ZoomState* z) {
