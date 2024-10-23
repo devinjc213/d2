@@ -18,6 +18,7 @@
 #include "../../shared/logger.h"
 #include "../../shared/asserts.h"
 
+static int init_sdl();
 static void init_windows(Editor* e);
 static void init_renderers(Editor* e);
 static void init_cache(Editor* e);
@@ -28,6 +29,11 @@ static void init_nuklear(Editor* e);
 //TODO: check for errors lol
 
 void init_editor(Editor* e) {
+    if (init_sdl() != 0) {
+        GFATAL("SDL failed to initialize.  Abandon all hope.");
+        return;
+    }
+
     init_windows(e);
     init_renderers(e);
     init_cache(e);
@@ -241,6 +247,9 @@ void cleanup_editor(Editor* e) {
     SDL_DestroyWindow(e->t_win);
     SDL_DestroyWindow(e->s_win);
 
+    destroy_texture_cache(e->e_cache);
+    destroy_texture_cache(e->t_cache);
+
     IMG_Quit();
     SDL_Quit();
 }
@@ -363,4 +372,16 @@ static void init_nuklear(Editor* e) {
     nk_sdl_font_stash_begin(&e->nk_atlas);
     nk_sdl_font_stash_end();
     GINFO("nuklear initialized");
+}
+
+static int init_sdl() {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        return 1;
+    }
+    if (IMG_Init(IMG_INIT_PNG) != (IMG_INIT_PNG)) {
+        SDL_Quit();
+        return 1;
+    }
+
+    return 0;
 }

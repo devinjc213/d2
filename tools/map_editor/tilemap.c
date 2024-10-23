@@ -15,7 +15,7 @@ TileMap* create_tilemap(int height, int width, int layers) {
     map->render_layers = malloc(layers * sizeof(RenderLayer));
 
     for (int i = 0; i < layers; i++) {
-        init_render_layer(&map->render_layers[0], INITIAL_LAYER_CAPACITY);
+        init_render_layer(&map->render_layers[i], INITIAL_LAYER_CAPACITY);
     }
     
     return map;
@@ -46,6 +46,8 @@ void add_prop_tile(TileMap* map, PropTile props) {
 
 
 void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache) {
+    if (!layer->count) return;
+
     for (int i = 0; i < layer->count; i++) {
         SDL_Texture* texture = get_texture(cache, renderer, layer->tiles[i].tilesheet);
         SDL_RenderCopy(renderer, texture, &layer->tiles[i].src, &layer->tiles[i].dest);
