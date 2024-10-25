@@ -1,4 +1,3 @@
-#include "defs.h"
 #include "editor.h"
 #include "input.h"
 

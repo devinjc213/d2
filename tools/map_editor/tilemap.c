@@ -1,8 +1,8 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
+#include "editor.h"
 #include "tilemap.h"
 #include "../../shared/logger.h"
-#include "defs.h"
 #include "texture_cache.h"
 
 TileMap* create_tilemap(int height, int width, int layers) {
@@ -45,11 +45,27 @@ void add_prop_tile(TileMap* map, PropTile props) {
 }
 
 
-void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache) {
+void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache, ZoomState* z) {
     if (!layer->count) return;
 
     for (int i = 0; i < layer->count; i++) {
         SDL_Texture* texture = get_texture(cache, renderer, layer->tiles[i].tilesheet);
-        SDL_RenderCopy(renderer, texture, &layer->tiles[i].src, &layer->tiles[i].dest);
+        int x, y;
+        tilesheet_to_screen(z->offset_x,
+                            z->offset_y,
+                            z->scale,
+                            layer->tiles[i].dest.x,
+                            layer->tiles[i].dest.y,
+                            &x,
+                            &y);
+
+        SDL_Rect dest = {
+            x,
+            y,
+            layer->tiles[i].dest.w * z->scale,
+            layer->tiles[i].dest.h * z->scale
+        };
+
+        SDL_RenderCopy(renderer, texture, &layer->tiles[i].src, &dest);
     }
 }

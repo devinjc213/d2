@@ -6,6 +6,7 @@
 
 #include <SDL2/SDL.h>
 #include "texture_cache.h"
+#include "defs.h"
 #include "tilemap.h"
 
 typedef struct {
@@ -15,11 +16,6 @@ typedef struct {
   int render_layer_2;
   int render_layer_3;
 } EditorSettings;
-
-typedef struct {
-  float offset_x, offset_y;
-  float scale;
-} ZoomState;
 
 typedef struct {
   int x;
@@ -89,7 +85,8 @@ void init_editor(Editor* e);
 void cleanup_editor(Editor* e);
 
 //input
-void screen_to_tilesheet(Editor* e,
+void screen_to_tilesheet(int w,
+                         int h,
                          int zoom_x,
                          int zoom_y,
                          float scale,

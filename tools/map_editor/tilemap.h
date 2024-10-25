@@ -9,6 +9,7 @@
 #include "../../shared/sprite.h"
 #include "tilesheet.h"
 #include "texture_cache.h"
+#include "defs.h"
 
 typedef struct {
   int layer;
@@ -41,7 +42,7 @@ TileMap* create_tilemap(int height, int width, int layers);
 void init_render_layer(RenderLayer* render_layer, int initial_capcity);
 void add_render_tile(RenderLayer* layer, RenderTile tile);
 void add_prop_tile(TileMap* map, PropTile props);
-void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache);
+void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache, ZoomState* z);
 void free_tilemap(TileMap* map);
 
 #endif

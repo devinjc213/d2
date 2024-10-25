@@ -1,7 +1,8 @@
 #include "../../shared/nuklear.h"
 #include "../../shared/nuklear_sdl_renderer.h"
-#include "input.h"
+#include "../../shared/logger.h"
 #include "editor.h"
+#include "input.h"
 
 static void handle_any_input(SDL_Event* e, Editor* editor);
 static void handle_editor_input(SDL_Event* e, Editor* editor);
@@ -46,8 +47,22 @@ static void handle_editor_input(SDL_Event* e, Editor* editor) {
             handle_mousewheel(e, &editor->e_zoom);
             break;
 
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONDOWN: {
+            int x, y;
             SDL_GetMouseState(&editor->e_mouse.click_x, &editor->e_mouse.click_y);
+
+            screen_to_tilesheet(editor->e_w,
+                                editor->e_h,
+                                editor->e_zoom.offset_x,
+                                editor->e_zoom.offset_y,
+                                editor->e_zoom.scale,
+                                editor->e_mouse.click_x,
+                                editor->e_mouse.click_y,
+                                &x,
+                                &y);
+
+            editor->e_mouse.click_x = x;
+            editor->e_mouse.click_y = y;
 
             SDL_Rect dest = {
                 snap_to_grid(editor->e_mouse.click_x, editor->e_zoom.scale),
@@ -55,6 +70,8 @@ static void handle_editor_input(SDL_Event* e, Editor* editor) {
                 editor->select_buf.rect.w,
                 editor->select_buf.rect.h
             };
+
+            GINFO("dest rect: x: %d, y: %d, w: %d, h: %d", editor->e_mouse.click_x, editor->e_mouse.click_y, editor->select_buf.rect.w, editor->select_buf.rect.h);
 
             RenderTile tile = {
                 .layer = editor->settings.layer,
@@ -66,6 +83,7 @@ static void handle_editor_input(SDL_Event* e, Editor* editor) {
             add_render_tile(&editor->tile_map->render_layers[editor->settings.layer], tile); 
 
             break;
+        }
 
         case SDL_MOUSEMOTION:
             SDL_GetMouseState(&editor->e_mouse.x, &editor->e_mouse.y);
@@ -102,7 +120,8 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 
             SDL_GetMouseState(&editor->t_mouse.click_x, &editor->t_mouse.click_y);
             int start_tile_x, start_tile_y;
-            screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor->t_w, 
+                                editor->t_h,
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -120,7 +139,8 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
             int cur_x, cur_y, translate_x, translate_y;
             SDL_GetMouseState(&cur_x, &cur_y);
 
-            screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor->t_w, 
+                                editor->t_h,
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -145,7 +165,8 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 
             int cur_x, cur_y, translate_x, translate_y;
             SDL_GetMouseState(&cur_x, &cur_y);
-            screen_to_tilesheet(editor, 
+            screen_to_tilesheet(editor->t_w, 
+                                editor->t_h,
                                 editor->t_zoom.offset_x, 
                                 editor->t_zoom.offset_y, 
                                 editor->t_zoom.scale, 
@@ -194,9 +215,6 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 }
 
 static void handle_settings_input(SDL_Event* e, Editor* editor) {
-    nk_input_begin(editor->nk_ctx);
-    nk_sdl_handle_event(e);
-    nk_input_end(editor->nk_ctx);
 }
 
 static void handle_mousewheel(SDL_Event* e, ZoomState* z) {
