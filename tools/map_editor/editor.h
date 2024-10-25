@@ -6,7 +6,6 @@
 
 #include <SDL2/SDL.h>
 #include "texture_cache.h"
-#include "defs.h"
 #include "tilemap.h"
 
 typedef struct {

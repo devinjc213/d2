@@ -215,6 +215,9 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 }
 
 static void handle_settings_input(SDL_Event* e, Editor* editor) {
+    nk_input_begin(editor->nk_ctx);
+    nk_sdl_handle_event(e);
+    nk_input_end(editor->nk_ctx);
 }
 
 static void handle_mousewheel(SDL_Event* e, ZoomState* z) {
