@@ -1,153 +1,25 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include "defs.h"
-#include "../../shared/logger.h"
-#include "../../shared/kiss_sdl.h"
-#include "tilemap.h"
-#include "panel.h"
-
-
-SDL_Window* eWindow;
-SDL_Renderer* eRenderer;
-void cleanup_editor();
-kiss_array objects, a1, a2;
-kiss_window window1, window2;
-void render_grid(SDL_Renderer* renderer);
-void render_tile(SDL_Renderer* renderer, Tile* tile);
-int snap_to_grid(int coord, int base);
+#include "editor.h"
+#include "input.h"
 
 int main() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        return 1;
-    }
-    if (IMG_Init(IMG_INIT_PNG) != (IMG_INIT_PNG)) {
-        SDL_Quit();
-        return 1;
-    }
+    Editor editor;
+    init_editor(&editor);
 
-    SDL_Window* eWindow = SDL_CreateWindow("Tilemap Editor", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    SDL_Renderer* eRenderer = SDL_CreateRenderer(eWindow, -1, SDL_RENDERER_ACCELERATED);
+    while (!editor.quit) {
+        // === Handle Input ===
+        SDL_Event e;
 
-    if (init_sprites(eRenderer, "../../assets/tileset.png", "../../tile_coords") > 0) {
-        GFATAL("Failed to initialize sprites");
-    }
-
-    Sprite* selected_sprite = find_sprite(&sprite_map, "flask_big_green");
-    TileMap* tilemap = create_tilemap();
-    SpritePanel* panel = init_panel(&sprite_map);
-    if (panel == NULL) {
-        GWARN("Panel failed to initialize!");
-    }
-
-    SpriteCoord* panel_sprite_coords[MAX_SPRITES];
-
-    int quit = 0;
-    int mouse_held_down = 0;
-
-    SDL_Event e;
-    while (!quit) {
         while (SDL_PollEvent(&e) != 0) {
-            switch (e.type) {
-                case SDL_QUIT:
-                    quit = 1;
-                    break;
-
-                case SDL_MOUSEBUTTONDOWN:
-                    if (e.button.button == SDL_BUTTON_LEFT) {
-                        mouse_held_down = 1;
-
-                        if (e.button.x > PANEL_WIDTH && selected_sprite != NULL) {
-                            int snapped_x = snap_to_grid(e.button.x, 16);
-                            int snapped_y = snap_to_grid(e.button.y, 16);
-                            add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
-                        }
-                        else if (e.button.x < PANEL_WIDTH) {
-                            int snapped_x = snap_to_grid(e.button.x, 21) + PANEL_PADDING;
-                            int snapped_y = snap_to_grid(e.button.y, 21) + PANEL_PADDING;
-                            Sprite* clicked_sprite = find_sprite_panel(panel, snapped_x, snapped_y);
-                            if (clicked_sprite != NULL) {
-                                GINFO("sprite found!");
-                                selected_sprite = clicked_sprite;
-                            } else {
-                                GINFO("%d, %d did not find a sprite", snapped_x, snapped_y);
-                            }
-                        }
-                    }
-
-                    if (e.button.button == SDL_BUTTON_RIGHT) {
-                        int snapped_x = snap_to_grid(e.button.x, 16);
-                        int snapped_y = snap_to_grid(e.button.y, 16);
-                        Tile* tile_to_remove = find_tile_by_coords(tilemap, snapped_x, snapped_y);
-                        if (tile_to_remove != NULL) {
-                            remove_tile(tilemap, tile_to_remove);
-                        } 
-                    }
-                    break;
-
-                case SDL_MOUSEMOTION:
-                    if (mouse_held_down) {
-                        if (e.button.button == SDL_BUTTON_LEFT) {
-                            int snapped_x = snap_to_grid(e.button.x, 16);
-                            int snapped_y = snap_to_grid(e.button.y, 16);
-                            if (snapped_x > PANEL_WIDTH) {
-                                add_tile(tilemap, snapped_x, snapped_y, selected_sprite);
-                            }
-                        }
-                    }
-
-                    break;
-
-                case SDL_MOUSEBUTTONUP:
-                    mouse_held_down = 0;
-                    break;  
-            }
+            handle_input(&e, &editor);
         }
 
-        SDL_SetRenderDrawColor(eRenderer, 100, 100, 100, 255);
-        SDL_RenderClear(eRenderer);
-
-        render_grid(eRenderer);
-        render_panel(eRenderer, spritesheet, panel, selected_sprite);
-
-        for (int i = 0; i < tilemap->count; i++) {
-            render_tile(eRenderer, tilemap->tiles[i]);
-        }
-
-        SDL_RenderPresent(eRenderer);
+        // === Handle Rendering ===
+        render_editor_win(&editor);
+        render_tilesheet_win(&editor);
+        render_settings_win(&editor);
     }
 
-    cleanup_editor();
+    cleanup_editor(&editor);
     return 0;
 }
 
-void render_tile(SDL_Renderer* renderer, Tile* tile) {
-    SDL_Rect dest = { tile->rect.x, tile->rect.y, TILE_SIZE, TILE_SIZE };
-
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-    SDL_RenderCopy(renderer, spritesheet, &tile->sprite->rect, &dest);
-}
-
-void render_grid(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 83, 83, 83, 155);
-
-    for (int i = 16; i < SCREEN_WIDTH; i += 16) {
-        SDL_RenderDrawLine(renderer, i, 0, i, SCREEN_HEIGHT);
-    }
-
-    for (int i = 16; i < SCREEN_HEIGHT; i += 16) {
-        SDL_RenderDrawLine(renderer, 0, i, SCREEN_WIDTH, i);
-    }
-}
-
-int snap_to_grid(int coord, int base) {
-    return (coord / base) * base;
-}
-
-void cleanup_editor() {
-    SDL_DestroyRenderer(eRenderer);
-    SDL_DestroyWindow(eWindow);
-
-    IMG_Quit();
-    SDL_Quit();
-}
