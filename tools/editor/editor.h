@@ -103,7 +103,7 @@ void tilesheet_to_screen(int zoom_x,
                          int* screen_y);
 
 void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y);
-int is_window_focused(SDL_Window* window);
+SDL_bool is_window_focused(SDL_Window* window);
 int snap_to_grid(int coord, float scale);
 void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale);
 void render_editor_win(Editor* e);
