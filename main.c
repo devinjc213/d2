@@ -23,7 +23,7 @@ int main() {
         GFATAL("Failed to initialize sprites");
     }
 
-    float delta_time = 1.0f / 144.0f;
+    float delta_time = 1.0f / 64.0f;
 
     Game* game = create_game();
     InputState input;
