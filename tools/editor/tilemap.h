@@ -1,21 +1,15 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-#define LAYERS 3
-#define MAP_WIDTH 64 
-#define MAP_HEIGHT 64 
-#define INITIAL_LAYER_CAPACITY 250
-
 #include "../../shared/sprite.h"
-#include "tilesheet.h"
 #include "texture_cache.h"
-#include "defs.h"
+#include "utils.h"
 
 typedef struct {
   int layer;
   SDL_Rect src;
   SDL_Rect dest;
-  tilesheet_t tilesheet;
+  char *tilesheet;
 } RenderTile;
 
 typedef struct {

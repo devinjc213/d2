@@ -77,7 +77,7 @@ static void handle_editor_input(SDL_Event* e, Editor* editor) {
                 .layer = editor->settings.layer,
                 .src = editor->select_buf.rect,
                 .dest =  dest,
-                .tilesheet = editor->cur_sheet_index
+                .tilesheet = editor->d_asset_dir.paths[editor->cur_sheet_index]
             };
 
             add_render_tile(&editor->tile_map->render_layers[editor->settings.layer], tile); 
@@ -184,7 +184,7 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
             SDL_Rect selection = {snapBX, snapBY, snapCX - snapBX, snapCY - snapBY};
 
             editor->select_buf.rect = selection;
-            editor->select_buf.tilesheet = editor->cur_sheet_index;
+            editor->select_buf.tilesheet = editor->d_asset_dir.paths[editor->cur_sheet_index];
             editor->select_buf.active_selection = 1;
             editor->t_mouse.click_x = 0;
             editor->t_mouse.click_y = 0;
@@ -202,8 +202,8 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
                         editor->cur_sheet_index = (editor->cur_sheet_index - 1 + editor->total_sheets) % editor->total_sheets;
                         break;
                 }
-                editor->cur_t_sheet = get_texture(editor->t_cache, editor->t_render, editor->cur_sheet_index);
-                editor->cur_e_sheet = get_texture(editor->e_cache, editor->e_render, editor->cur_sheet_index);
+                editor->cur_t_sheet = get_texture(editor->t_cache, editor->t_render, editor->d_asset_dir.paths[editor->cur_sheet_index]);
+                editor->cur_e_sheet = get_texture(editor->e_cache, editor->e_render, editor->d_asset_dir.paths[editor->cur_sheet_index]);
 
                 SDL_QueryTexture(editor->cur_t_sheet, NULL, NULL, &editor->t_w, &editor->t_h);
 
@@ -215,9 +215,9 @@ static void handle_tilesheet_input(SDL_Event* e, Editor* editor) {
 }
 
 static void handle_settings_input(SDL_Event* e, Editor* editor) {
-    nk_input_begin(editor->nk_ctx);
+    nk_input_begin(editor->s_nk_ctx);
     nk_sdl_handle_event(e);
-    nk_input_end(editor->nk_ctx);
+    nk_input_end(editor->s_nk_ctx);
 }
 
 static void handle_mousewheel(SDL_Event* e, ZoomState* z) {

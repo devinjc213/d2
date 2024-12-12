@@ -12,9 +12,13 @@
 #define NK_SDL_RENDERER_IMPLEMENTATION
 #include "../../shared/nuklear_sdl_renderer.h"
 
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "editor.h"
+#include "utils.h"
 #include "../../shared/logger.h"
 #include "../../shared/asserts.h"
 
@@ -26,6 +30,7 @@ static void init_textures(Editor* e);
 static void init_tile_map(Editor* e);
 static void init_settings(Editor* e);
 static void init_nuklear(Editor* e);
+static int load_asset_directory(Editor *e, const char* dir_path);
 //TODO: check for errors lol
 
 void init_editor(Editor* e) {
@@ -41,61 +46,6 @@ void init_editor(Editor* e) {
     init_tile_map(e);
     init_settings(e);
     init_nuklear(e);
-}
-
-void screen_to_tilesheet(int w,
-                         int h,
-                         int zoom_x,
-                         int zoom_y,
-                         float scale,
-                         int screen_x,
-                         int screen_y,
-                         int* tile_x,
-                         int* tile_y) {
-    *tile_x = (screen_x - zoom_x) / scale;
-    *tile_y = (screen_y - zoom_y) / scale;
-
-    //clamp
-    *tile_x = (*tile_x < 0) ? 0 : (*tile_x >= w) ? w - 1 : *tile_x;
-    *tile_y = (*tile_y < 0) ? 0 : (*tile_y >= h) ? h - 1 : *tile_y;
-}
-
-void tilesheet_to_screen(int zoom_x,
-                         int zoom_y,
-                         float scale,
-                         int tile_x,
-                         int tile_y,
-                         int* screen_x,
-                         int* screen_y) {
-    *screen_x = (tile_x * scale) + zoom_x;
-    *screen_y = (tile_y * scale) + zoom_y;
-}
-
-int snap_to_grid(int coord, float scale) {
-    float scaled_tile = TILE_SIZE * scale;
-
-    return (int)(roundf(coord / scaled_tile) * scaled_tile);
-}
-
-void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y) {
-    float old_scale = z->scale;
-    z->scale = new_scale;
-
-    float world_x = (m_x - z->offset_x) / old_scale;
-    float world_y = (m_y - z->offset_y) / old_scale;
-
-    z->offset_x = snap_to_grid(m_x - (world_x * new_scale), new_scale);
-    z->offset_y = snap_to_grid(m_y - (world_y * new_scale), new_scale);
-
-    if (fabsf(new_scale - 1.0f) < 0.001f) {
-        z->offset_x = 0;
-        z->offset_y = 0;
-    }
-}
-
-SDL_bool is_window_focused(SDL_Window* window) {
-    uint32_t flags = SDL_GetWindowFlags(window);
-    return (flags & SDL_WINDOW_INPUT_FOCUS) != 0;
 }
 
 void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale) {
@@ -225,42 +175,42 @@ void render_settings_win(Editor* e) {
     SDL_SetRenderDrawColor(e->s_render, 100, 100, 100, 255);
     SDL_RenderClear(e->s_render);
 
-    if (nk_begin(e->nk_ctx,
+    if (nk_begin(e->s_nk_ctx,
                     "Settings",
                     nk_rect(0, 0, 300, 768),
                     NK_WINDOW_BORDER|NK_WINDOW_TITLE)
     ) {
-        nk_layout_row_dynamic(e->nk_ctx, 30, 1);
-        nk_label(e->nk_ctx, "Paint Layers", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
+        nk_label(e->s_nk_ctx, "Paint Layers", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->nk_ctx, 30, 3);
-        if (nk_option_label(e->nk_ctx, "Layer 1", e->settings.layer == 0)) e->settings.layer = 0;
-        if (nk_option_label(e->nk_ctx, "Layer 2", e->settings.layer == 1)) e->settings.layer = 1;
-        if (nk_option_label(e->nk_ctx, "Layer 3", e->settings.layer == 2)) e->settings.layer = 2;
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 3);
+        if (nk_option_label(e->s_nk_ctx, "Layer 1", e->settings.layer == 0)) e->settings.layer = 0;
+        if (nk_option_label(e->s_nk_ctx, "Layer 2", e->settings.layer == 1)) e->settings.layer = 1;
+        if (nk_option_label(e->s_nk_ctx, "Layer 3", e->settings.layer == 2)) e->settings.layer = 2;
 
-        nk_spacer(e->nk_ctx);
+        nk_spacer(e->s_nk_ctx);
 
-        nk_layout_row_dynamic(e->nk_ctx, 30, 1);
-        nk_label(e->nk_ctx, "Tile Settings", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
+        nk_label(e->s_nk_ctx, "Tile Settings", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->nk_ctx, 30, 1);
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
         nk_bool check = e->settings.collidable;
-        if(nk_checkbox_label(e->nk_ctx, "Collidable", &check)) e->settings.collidable = check;
+        if(nk_checkbox_label(e->s_nk_ctx, "Collidable", &check)) e->settings.collidable = check;
 
-        nk_spacer(e->nk_ctx);
+        nk_spacer(e->s_nk_ctx);
 
-        nk_layout_row_dynamic(e->nk_ctx, 30, 1);
-        nk_label(e->nk_ctx, "Render Layers", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
+        nk_label(e->s_nk_ctx, "Render Layers", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->nk_ctx, 30, 3);
+        nk_layout_row_dynamic(e->s_nk_ctx, 30, 3);
         nk_bool render_1 = e->settings.render_layer_1;
         nk_bool render_2 = e->settings.render_layer_2;
         nk_bool render_3 = e->settings.render_layer_3;
-        if(nk_checkbox_label(e->nk_ctx, "Layer 1", &render_1)) e->settings.render_layer_1 = render_1;
-        if(nk_checkbox_label(e->nk_ctx, "Layer 2", &render_2)) e->settings.render_layer_2 = render_2;
-        if(nk_checkbox_label(e->nk_ctx, "Layer 3", &render_3)) e->settings.render_layer_3 = render_3;
+        if(nk_checkbox_label(e->s_nk_ctx, "Layer 1", &render_1)) e->settings.render_layer_1 = render_1;
+        if(nk_checkbox_label(e->s_nk_ctx, "Layer 2", &render_2)) e->settings.render_layer_2 = render_2;
+        if(nk_checkbox_label(e->s_nk_ctx, "Layer 3", &render_3)) e->settings.render_layer_3 = render_3;
     }
-    nk_end(e->nk_ctx);
+    nk_end(e->s_nk_ctx);
 
     nk_sdl_render(NK_ANTI_ALIASING_ON);
     SDL_RenderPresent(e->s_render);
@@ -330,12 +280,18 @@ static void init_textures(Editor* e) {
     GINFO("Initialzing textures...");
     e->cur_sheet_index = 0;
     // TODO: read a dir rather than hard code
-    e->total_sheets = 31;
-    e->cur_e_sheet = load_texture(e->e_cache, e->e_render, e->cur_sheet_index);
-    e->cur_t_sheet = load_texture(e->t_cache, e->t_render, e->cur_sheet_index);
-    SDL_QueryTexture(e->cur_t_sheet, NULL, NULL, &e->t_w, &e->t_h);
-    SDL_SetWindowSize(e->t_win, e->t_w, e->t_h);
-    GINFO("Textures initialized");
+    e->total_sheets = load_asset_directory(e, "./bin/assets/Rogue/Rogue Adventure World 3.0.0/Tilesets (32x32)");
+    GINFO("After dir search");
+    if (e->total_sheets > 0) {
+        e->cur_e_sheet = load_texture(e->e_cache, e->e_render, e->d_asset_dir.paths[0]);
+        e->cur_t_sheet = load_texture(e->t_cache, e->t_render, e->d_asset_dir.paths[0]);
+        SDL_QueryTexture(e->cur_t_sheet, NULL, NULL, &e->t_w, &e->t_h);
+        SDL_SetWindowSize(e->t_win, e->t_w, e->t_h);
+
+        GINFO("Textures initialized");
+    } else {
+        GWARN("Failed to load asset dir!");
+    }
 }
 
 static void init_tile_map(Editor* e) {
@@ -396,8 +352,10 @@ static void init_settings(Editor* e) {
 
 static void init_nuklear(Editor* e) {
     GINFO("Initilizing nuklear...");
-    e->nk_ctx = nk_sdl_init(e->s_win, e->s_render);
     nk_sdl_font_stash_begin(&e->nk_atlas);
+    e->e_nk_ctx = nk_sdl_init(e->e_win, e->e_render);
+    e->s_nk_ctx = nk_sdl_init(e->s_win, e->s_render);
+    e->t_nk_ctx = nk_sdl_init(e->t_win, e->t_render);
     nk_sdl_font_stash_end();
     GINFO("nuklear initialized");
 }
@@ -413,3 +371,48 @@ static int init_sdl() {
 
     return 0;
 }
+
+static int load_asset_directory(Editor *e, const char* dir_path) {
+    DIR* dir;
+    struct dirent* entry;
+
+    for (int i = 0; i < MAX_ASSET_FILES; i++) {
+        e->d_asset_dir.paths[i] = NULL;
+    }
+    e->d_asset_dir.count = 0;
+
+    dir = opendir(dir_path);
+    if (dir == NULL) {
+        GERROR("Failed to open directory: %s\n", dir_path);
+        return 0;
+    }
+
+    while ((entry = readdir(dir))) {
+        if (entry->d_type == DT_REG) {
+            const char *ext = strrchr(entry->d_name, '.');
+
+            if (ext && (
+                strcmp(ext, ".png") == 0 ||
+                strcmp(ext, ".bmp") == 0 || 
+                strcmp(ext, ".jpg") == 0 ||
+                strcmp(ext, ".jpeg") == 0
+            )) {
+                char full_path[MAX_FILENAME];
+                snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+
+                if (e->d_asset_dir.count < MAX_ASSET_FILES) {
+                    e->d_asset_dir.paths[e->d_asset_dir.count++] = strdup(full_path);
+                } else {
+                    GWARN("Maximum asset file limit reached. Skipping: %s\n", full_path);
+                    break;
+                }
+            }
+        }
+    }
+    
+    GINFO("%d asset files scanned.", e->d_asset_dir.count);
+    GINFO("%s", e->d_asset_dir.paths[0])
+
+    return e->d_asset_dir.count;
+}
+

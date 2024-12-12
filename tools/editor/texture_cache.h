@@ -1,18 +1,21 @@
 #ifndef TEXTURE_CACHE_H 
 #define TEXTURE_CACHE_H 
 #include <SDL2/SDL.h>
-#include "tilesheet.h"
-
-#define MAX_CACHE 31
+#include "defs.h"
 
 typedef struct {
-  SDL_Texture* textures[MAX_CACHE];
-  int loaded[MAX_CACHE];
+  char *name;
+  SDL_Texture *texture;
+} Texture;
+
+typedef struct {
+  Texture* textures[MAX_ASSET_FILES];
+  int count;
 } TextureCache;
 
 void init_texture_cache(TextureCache* cache);
-SDL_Texture* load_texture(TextureCache* cache, SDL_Renderer* renderer, tilesheet_t tilesheet);
-SDL_Texture* get_texture(TextureCache* cache, SDL_Renderer* renderer, tilesheet_t tilesheet);
+SDL_Texture* load_texture(TextureCache* cache, SDL_Renderer* renderer, char *file_path);
+SDL_Texture* get_texture(TextureCache* cache, SDL_Renderer* renderer, char *file_path);
 void destroy_texture_cache(TextureCache* cache);
 
 #endif

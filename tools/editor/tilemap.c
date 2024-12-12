@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
-#include "editor.h"
+#include "utils.h"
 #include "tilemap.h"
 #include "../../shared/logger.h"
 #include "texture_cache.h"
