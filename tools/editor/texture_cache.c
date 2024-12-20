@@ -16,7 +16,6 @@ SDL_Texture*
 load_texture(TextureCache* cache, SDL_Renderer* renderer, char *file_path) {
     GINFO("Attempting to load texture: %s\n", file_path);
     
-    // Allocate memory for the new Texture
     cache->textures[cache->count] = malloc(sizeof(Texture));
     if (cache->textures[cache->count] == NULL) {
         GERROR("Failed to allocate memory for texture\n");
@@ -30,14 +29,8 @@ load_texture(TextureCache* cache, SDL_Renderer* renderer, char *file_path) {
         return NULL;
     }
 
-    GINFO("Texture loaded: %s", file_path);
-    
-    // Use strdup to create a copy of the file path
     cache->textures[cache->count]->name = strdup(file_path);
-    GINFO("name set\n");
-    
     cache->textures[cache->count]->texture = texture;
-    GINFO("texture set\n");
     
     return cache->textures[cache->count++]->texture;
 }

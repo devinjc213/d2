@@ -46,10 +46,12 @@ typedef struct {
   SDL_Renderer* t_render;
   SDL_Renderer* s_render;
 
-  struct nk_context* e_nk_ctx;
-  struct nk_context* t_nk_ctx;
-  struct nk_context* s_nk_ctx;
-  struct nk_font_atlas* nk_atlas;
+  struct nk_sdl* e_nk_state;
+  struct nk_sdl* t_nk_state;
+  struct nk_sdl* s_nk_state;
+  struct nk_font_atlas* e_nk_atlas;
+  struct nk_font_atlas* t_nk_atlas;
+  struct nk_font_atlas* s_nk_atlas;
 
   asset_directory_t d_asset_dir;
 
@@ -99,5 +101,6 @@ void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale
 void render_editor_win(Editor* e);
 void render_tilesheet_win(Editor* e);
 void render_settings_win(Editor* e);
+void handle_settings_input(SDL_Event* e, Editor* editor);
 
 #endif

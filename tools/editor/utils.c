@@ -29,7 +29,7 @@ void screen_to_tilesheet(int w,
 
     //clamp
     *tile_x = (*tile_x < 0) ? 0 : (*tile_x >= w) ? w - 1 : *tile_x;
-    *tile_y = (*tile_y < 0) ? 0 : (*tile_y >= h) ? h - 1 : *tile_y;
+    *tile_y = ((screen_y - EDITOR_TOOL_HEIGHT) - zoom_y) / scale;
 }
 
 void tilesheet_to_screen(int zoom_x,
@@ -40,7 +40,7 @@ void tilesheet_to_screen(int zoom_x,
                          int* screen_x,
                          int* screen_y) {
     *screen_x = (tile_x * scale) + zoom_x;
-    *screen_y = (tile_y * scale) + zoom_y;
+    *screen_y = (tile_y * scale) + zoom_y + EDITOR_TOOL_HEIGHT;
 }
 
 int snap_to_grid(int coord, float scale) {
@@ -54,10 +54,10 @@ void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y) {
     z->scale = new_scale;
 
     float world_x = (m_x - z->offset_x) / old_scale;
-    float world_y = (m_y - z->offset_y) / old_scale;
+    float world_y = ((m_y - EDITOR_TOOL_HEIGHT) - z->offset_y) / old_scale;
 
     z->offset_x = snap_to_grid(m_x - (world_x * new_scale), new_scale);
-    z->offset_y = snap_to_grid(m_y - (world_y * new_scale), new_scale);
+    z->offset_y = snap_to_grid((m_y - EDITOR_TOOL_HEIGHT) - (world_y * new_scale), new_scale);
 
     if (fabsf(new_scale - 1.0f) < 0.001f) {
         z->offset_x = 0;

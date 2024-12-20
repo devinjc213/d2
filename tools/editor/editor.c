@@ -71,7 +71,7 @@ void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale
 void render_editor_win(Editor* e) {
     SDL_SetRenderDrawColor(e->e_render, 100, 100, 100, 255);
     SDL_RenderClear(e->e_render);
-
+    
     if (e->settings.render_layer_1) {
         render_layer(&e->tile_map->render_layers[0], e->e_render, e->e_cache, &e->e_zoom);
     }
@@ -91,7 +91,7 @@ void render_editor_win(Editor* e) {
         int snapY = snap_to_grid(e->e_mouse.y, e->e_zoom.scale);
 
         DASSERT(e->cur_e_sheet != NULL);
-        SDL_Rect dest = {snapX, snapY, e->select_buf.rect.w * e->e_zoom.scale, e->select_buf.rect.h * e->e_zoom.scale};
+        SDL_Rect dest = {snapX, snapY, e->select_buf.rect.w * e->e_zoom.scale, (e->select_buf.rect.h * e->e_zoom.scale) + EDITOR_TOOL_HEIGHT};
         SDL_SetRenderDrawBlendMode(e->e_render, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(e->e_render, 0, 0, 255, 100);
         SDL_RenderCopy(e->e_render, e->cur_e_sheet, &e->select_buf.rect, &dest);
@@ -99,7 +99,20 @@ void render_editor_win(Editor* e) {
         SDL_RenderDrawRect(e->e_render, &dest);
     }
 
+    if (nk_begin(&e->e_nk_state->ctx,
+                    "Editor",
+                    nk_rect(0, 0, SCREEN_WIDTH, 30),
+                    NK_WINDOW_SCALABLE)
+    ) {
+        nk_layout_row_dynamic(&e->e_nk_state->ctx, EDITOR_TOOL_HEIGHT, 1);
+        nk_label(&e->e_nk_state->ctx, "File", NK_TEXT_LEFT);
+    }
+    nk_end(&e->e_nk_state->ctx);
+
+    nk_sdl_render(NK_ANTI_ALIASING_ON, e->e_nk_state);
     SDL_RenderPresent(e->e_render);
+
+    nk_clear(&e->e_nk_state->ctx);
 }
 
 void render_tilesheet_win(Editor* e) {
@@ -175,45 +188,54 @@ void render_settings_win(Editor* e) {
     SDL_SetRenderDrawColor(e->s_render, 100, 100, 100, 255);
     SDL_RenderClear(e->s_render);
 
-    if (nk_begin(e->s_nk_ctx,
+
+    if (nk_begin(&e->s_nk_state->ctx,
                     "Settings",
                     nk_rect(0, 0, 300, 768),
                     NK_WINDOW_BORDER|NK_WINDOW_TITLE)
     ) {
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
-        nk_label(e->s_nk_ctx, "Paint Layers", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 1);
+        nk_label(&e->s_nk_state->ctx, "Paint Layers", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 3);
-        if (nk_option_label(e->s_nk_ctx, "Layer 1", e->settings.layer == 0)) e->settings.layer = 0;
-        if (nk_option_label(e->s_nk_ctx, "Layer 2", e->settings.layer == 1)) e->settings.layer = 1;
-        if (nk_option_label(e->s_nk_ctx, "Layer 3", e->settings.layer == 2)) e->settings.layer = 2;
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 3);
+        if (nk_option_label(&e->s_nk_state->ctx, "Layer 1", e->settings.layer == 0)) e->settings.layer = 0;
+        if (nk_option_label(&e->s_nk_state->ctx, "Layer 2", e->settings.layer == 1)) e->settings.layer = 1;
+        if (nk_option_label(&e->s_nk_state->ctx, "Layer 3", e->settings.layer == 2)) e->settings.layer = 2;
 
-        nk_spacer(e->s_nk_ctx);
+        nk_spacer(&e->s_nk_state->ctx);
 
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
-        nk_label(e->s_nk_ctx, "Tile Settings", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 1);
+        nk_label(&e->s_nk_state->ctx, "Tile Settings", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 1);
         nk_bool check = e->settings.collidable;
-        if(nk_checkbox_label(e->s_nk_ctx, "Collidable", &check)) e->settings.collidable = check;
+        if(nk_checkbox_label(&e->s_nk_state->ctx, "Collidable", &check)) e->settings.collidable = check;
 
-        nk_spacer(e->s_nk_ctx);
+        nk_spacer(&e->s_nk_state->ctx);
 
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 1);
-        nk_label(e->s_nk_ctx, "Render Layers", NK_TEXT_LEFT);
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 1);
+        nk_label(&e->s_nk_state->ctx, "Render Layers", NK_TEXT_LEFT);
 
-        nk_layout_row_dynamic(e->s_nk_ctx, 30, 3);
+        nk_layout_row_dynamic(&e->s_nk_state->ctx, 30, 3);
         nk_bool render_1 = e->settings.render_layer_1;
         nk_bool render_2 = e->settings.render_layer_2;
         nk_bool render_3 = e->settings.render_layer_3;
-        if(nk_checkbox_label(e->s_nk_ctx, "Layer 1", &render_1)) e->settings.render_layer_1 = render_1;
-        if(nk_checkbox_label(e->s_nk_ctx, "Layer 2", &render_2)) e->settings.render_layer_2 = render_2;
-        if(nk_checkbox_label(e->s_nk_ctx, "Layer 3", &render_3)) e->settings.render_layer_3 = render_3;
+        if(nk_checkbox_label(&e->s_nk_state->ctx, "Layer 1", &render_1)) e->settings.render_layer_1 = render_1;
+        if(nk_checkbox_label(&e->s_nk_state->ctx, "Layer 2", &render_2)) e->settings.render_layer_2 = render_2;
+        if(nk_checkbox_label(&e->s_nk_state->ctx, "Layer 3", &render_3)) e->settings.render_layer_3 = render_3;
     }
-    nk_end(e->s_nk_ctx);
+    nk_end(&e->s_nk_state->ctx);
 
-    nk_sdl_render(NK_ANTI_ALIASING_ON);
+    nk_sdl_render(NK_ANTI_ALIASING_ON, e->s_nk_state);
     SDL_RenderPresent(e->s_render);
+
+    nk_clear(&e->s_nk_state->ctx);
+}
+
+void handle_settings_input(SDL_Event* e, Editor* editor) {
+    nk_input_begin(&editor->s_nk_state->ctx);
+    nk_sdl_handle_event(e, editor->s_nk_state);
+    nk_input_end(&editor->s_nk_state->ctx);
 }
 
 void cleanup_editor(Editor* e) {
@@ -281,7 +303,6 @@ static void init_textures(Editor* e) {
     e->cur_sheet_index = 0;
     // TODO: read a dir rather than hard code
     e->total_sheets = load_asset_directory(e, "./bin/assets/Rogue/Rogue Adventure World 3.0.0/Tilesets (32x32)");
-    GINFO("After dir search");
     if (e->total_sheets > 0) {
         e->cur_e_sheet = load_texture(e->e_cache, e->e_render, e->d_asset_dir.paths[0]);
         e->cur_t_sheet = load_texture(e->t_cache, e->t_render, e->d_asset_dir.paths[0]);
@@ -352,11 +373,19 @@ static void init_settings(Editor* e) {
 
 static void init_nuklear(Editor* e) {
     GINFO("Initilizing nuklear...");
-    nk_sdl_font_stash_begin(&e->nk_atlas);
-    e->e_nk_ctx = nk_sdl_init(e->e_win, e->e_render);
-    e->s_nk_ctx = nk_sdl_init(e->s_win, e->s_render);
-    e->t_nk_ctx = nk_sdl_init(e->t_win, e->t_render);
-    nk_sdl_font_stash_end();
+    e->s_nk_state = malloc(sizeof(*e->s_nk_state));
+    memset(e->s_nk_state, 0, sizeof(*e->s_nk_state));
+
+    e->e_nk_state = malloc(sizeof(*e->e_nk_state));
+    memset(e->e_nk_state, 0, sizeof(*e->e_nk_state));
+
+    nk_sdl_font_stash_begin(&e->s_nk_atlas, e->s_nk_state);
+    nk_sdl_init(e->s_win, e->s_render, e->s_nk_state);
+    nk_sdl_font_stash_end(e->s_nk_state);
+
+    nk_sdl_font_stash_begin(&e->e_nk_atlas, e->e_nk_state);
+    nk_sdl_init(e->e_win, e->e_render, e->e_nk_state);
+    nk_sdl_font_stash_end(e->e_nk_state);
     GINFO("nuklear initialized");
 }
 
@@ -415,4 +444,5 @@ static int load_asset_directory(Editor *e, const char* dir_path) {
 
     return e->d_asset_dir.count;
 }
+
 

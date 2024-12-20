@@ -1,4 +1,4 @@
-#define TILE_SIZE 16
+#define TILE_SIZE 32
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) < (b) ? (b) : (a))
 
@@ -17,6 +17,8 @@
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
+
+#define EDITOR_TOOL_HEIGHT 25
 
 #define MAX_ASSET_FILES 500
 #define MAX_FILENAME 256
