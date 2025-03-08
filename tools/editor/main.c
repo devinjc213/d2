@@ -3,6 +3,7 @@
 
 int main() {
     Editor editor;
+
     init_editor(&editor);
 
     while (!editor.quit) {

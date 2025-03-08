@@ -26,7 +26,7 @@ typedef struct {
   int frame_columns;
 
   float frame_duration;
-  float time_elapsed;
+  float frame_time_elapsed;
 
 } Entity;
 

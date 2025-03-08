@@ -2,9 +2,9 @@
 #define EDITOR_H
 
 #include <SDL2/SDL.h>
-#include "texture_cache.h"
 #include "tilemap.h"
 #include "defs.h"
+#include "../../engine/asset_manager.h"
 
 typedef struct {
   char *paths[MAX_ASSET_FILES];
@@ -55,8 +55,7 @@ typedef struct {
 
   asset_directory_t d_asset_dir;
 
-  TextureCache* e_cache;
-  TextureCache* t_cache;
+  AssetMap* asset_map;
 
   TileMap* tile_map;
 
@@ -96,7 +95,6 @@ typedef struct {
 
 void init_editor(Editor* e);
 void cleanup_editor(Editor* e);
-
 void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale);
 void render_editor_win(Editor* e);
 void render_tilesheet_win(Editor* e);

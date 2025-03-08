@@ -21,17 +21,16 @@
 #include "utils.h"
 #include "../../shared/logger.h"
 #include "../../shared/asserts.h"
+#include "../../engine/asset_manager.h"
 
 static int init_sdl();
 static void init_windows(Editor* e);
 static void init_renderers(Editor* e);
-static void init_cache(Editor* e);
-static void init_textures(Editor* e);
+static void init_textures(Editor* e, AssetMap* map);
 static void init_tile_map(Editor* e);
 static void init_settings(Editor* e);
 static void init_nuklear(Editor* e);
 static int load_asset_directory(Editor *e, const char* dir_path);
-//TODO: check for errors lol
 
 void init_editor(Editor* e) {
     if (init_sdl() != 0) {
@@ -41,8 +40,11 @@ void init_editor(Editor* e) {
 
     init_windows(e);
     init_renderers(e);
-    init_cache(e);
-    init_textures(e);
+    e->asset_map = malloc(sizeof(AssetMap));
+    init_asset_map(e->asset_map);
+
+    init_textures(e, e->asset_map);
+
     init_tile_map(e);
     init_settings(e);
     init_nuklear(e);
@@ -73,15 +75,15 @@ void render_editor_win(Editor* e) {
     SDL_RenderClear(e->e_render);
     
     if (e->settings.render_layer_1) {
-        render_layer(&e->tile_map->render_layers[0], e->e_render, e->e_cache, &e->e_zoom);
+        render_layer(&e->tile_map->render_layers[0], e->e_render, 0, e->asset_map, &e->e_zoom);
     }
 
     if (e->settings.render_layer_2) {
-        render_layer(&e->tile_map->render_layers[1], e->e_render, e->e_cache, &e->e_zoom);
+        render_layer(&e->tile_map->render_layers[1], e->e_render, 0, e->asset_map, &e->e_zoom);
     }
 
     if (e->settings.render_layer_3) {
-        render_layer(&e->tile_map->render_layers[2], e->e_render, e->e_cache, &e->e_zoom);
+        render_layer(&e->tile_map->render_layers[2], e->e_render, 0, e->asset_map, &e->e_zoom);
     }
 
     render_grid(e->e_render, e->e_zoom.offset_x, e->e_zoom.offset_y, e->e_zoom.scale);
@@ -91,23 +93,13 @@ void render_editor_win(Editor* e) {
         int snapY = snap_to_grid(e->e_mouse.y, e->e_zoom.scale);
 
         DASSERT(e->cur_e_sheet != NULL);
-        SDL_Rect dest = {snapX, snapY, e->select_buf.rect.w * e->e_zoom.scale, (e->select_buf.rect.h * e->e_zoom.scale) + EDITOR_TOOL_HEIGHT};
+        SDL_Rect dest = {snapX, snapY, e->select_buf.rect.w * e->e_zoom.scale, (e->select_buf.rect.h * e->e_zoom.scale)};
         SDL_SetRenderDrawBlendMode(e->e_render, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(e->e_render, 0, 0, 255, 100);
         SDL_RenderCopy(e->e_render, e->cur_e_sheet, &e->select_buf.rect, &dest);
         SDL_RenderFillRect(e->e_render, &dest);
         SDL_RenderDrawRect(e->e_render, &dest);
     }
-
-    if (nk_begin(&e->e_nk_state->ctx,
-                    "Editor",
-                    nk_rect(0, 0, SCREEN_WIDTH, 30),
-                    NK_WINDOW_SCALABLE)
-    ) {
-        nk_layout_row_dynamic(&e->e_nk_state->ctx, EDITOR_TOOL_HEIGHT, 1);
-        nk_label(&e->e_nk_state->ctx, "File", NK_TEXT_LEFT);
-    }
-    nk_end(&e->e_nk_state->ctx);
 
     nk_sdl_render(NK_ANTI_ALIASING_ON, e->e_nk_state);
     SDL_RenderPresent(e->e_render);
@@ -132,14 +124,14 @@ void render_tilesheet_win(Editor* e) {
     // draw active selection while selecting
     if (is_window_focused(e->t_win) && e->t_mouse.left_pressed == 1) {
         int scaled_cur_x, scaled_cur_y, scaled_select_x, scaled_select_y;
-        tilesheet_to_screen(e->t_zoom.offset_x,
+        world_to_screen(e->t_zoom.offset_x,
                             e->t_zoom.offset_y,
                             e->t_zoom.scale,
                             e->t_mouse.x,
                             e->t_mouse.y,
                             &scaled_cur_x,
                             &scaled_cur_y);
-        tilesheet_to_screen(e->t_zoom.offset_x,
+        world_to_screen(e->t_zoom.offset_x,
                             e->t_zoom.offset_y,
                             e->t_zoom.scale,
                             e->t_mouse.click_x,
@@ -161,7 +153,7 @@ void render_tilesheet_win(Editor* e) {
         SDL_SetRenderDrawBlendMode(e->t_render, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(e->t_render, 0, 0, 255, 100);
         int scaled_x, scaled_y;
-        tilesheet_to_screen(e->t_zoom.offset_x,
+        world_to_screen(e->t_zoom.offset_x,
                             e->t_zoom.offset_y,
                             e->t_zoom.scale,
                             e->select_buf.rect.x,
@@ -246,9 +238,6 @@ void cleanup_editor(Editor* e) {
     SDL_DestroyWindow(e->t_win);
     SDL_DestroyWindow(e->s_win);
 
-    destroy_texture_cache(e->e_cache);
-    destroy_texture_cache(e->t_cache);
-
     IMG_Quit();
     SDL_Quit();
 }
@@ -289,23 +278,20 @@ static void init_renderers(Editor* e) {
     e->s_render = SDL_CreateRenderer(e->s_win, -1, SDL_RENDERER_ACCELERATED);
 }
 
-static void init_cache(Editor* e) {
-    GINFO("Initializing cache...");
-    e->e_cache = malloc(sizeof(TextureCache));
-    e->t_cache = malloc(sizeof(TextureCache));
-    init_texture_cache(e->e_cache);
-    init_texture_cache(e->t_cache);
-    GINFO("Cache intialized");
-}
-
-static void init_textures(Editor* e) {
+static void init_textures(Editor* e, AssetMap* map) {
     GINFO("Initialzing textures...");
     e->cur_sheet_index = 0;
-    // TODO: read a dir rather than hard code
     e->total_sheets = load_asset_directory(e, "./bin/assets/Rogue/Rogue Adventure World 3.0.0/Tilesets (32x32)");
     if (e->total_sheets > 0) {
-        e->cur_e_sheet = load_texture(e->e_cache, e->e_render, e->d_asset_dir.paths[0]);
-        e->cur_t_sheet = load_texture(e->t_cache, e->t_render, e->d_asset_dir.paths[0]);
+        SDL_Renderer* renderers[] = {e->e_render, e->t_render};
+
+        for (int i = 0; i < e->total_sheets; i++) {
+            SDL_Texture** textures = load_asset_multi_render(renderers, 2, e->d_asset_dir.paths[i]);
+            add_asset(map, textures, 2, e->d_asset_dir.paths[i]);
+        }
+
+        e->cur_e_sheet = get_asset(map, e->d_asset_dir.paths[0], R_EDITOR);
+        e->cur_t_sheet = get_asset(map, e->d_asset_dir.paths[0], R_TILESHEETS);
         SDL_QueryTexture(e->cur_t_sheet, NULL, NULL, &e->t_w, &e->t_h);
         SDL_SetWindowSize(e->t_win, e->t_w, e->t_h);
 

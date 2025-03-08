@@ -2,7 +2,7 @@
 #define TILEMAP_H
 
 #include "../../shared/sprite.h"
-#include "texture_cache.h"
+#include "../../engine/asset_manager.h"
 #include "utils.h"
 
 typedef struct {
@@ -36,7 +36,7 @@ TileMap* create_tilemap(int height, int width, int layers);
 void init_render_layer(RenderLayer* render_layer, int initial_capcity);
 void add_render_tile(RenderLayer* layer, RenderTile tile);
 void add_prop_tile(TileMap* map, PropTile props);
-void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache, ZoomState* z);
+void render_layer(RenderLayer* layer, SDL_Renderer* renderer, enum Renderer render_idx, AssetMap* cache, ZoomState* z);
 void free_tilemap(TileMap* map);
 
 #endif
