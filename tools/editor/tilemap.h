@@ -1,7 +1,6 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-#include "../../shared/sprite.h"
 #include "../../engine/asset_manager.h"
 #include "utils.h"
 

@@ -1,7 +1,7 @@
 #include "input.h"
-#include "../../shared/logger.h"
-#include "../../shared/nuklear.h"
-#include "../../shared/nuklear_sdl_renderer.h"
+#include "../../engine/logger/logger.h"
+#include "../../vendor/nuklear.h"
+#include "../../vendor/nuklear_sdl_renderer.h"
 #include "editor.h"
 
 static void handle_any_input(SDL_Event *e, Editor *editor);

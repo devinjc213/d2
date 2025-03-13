@@ -7,10 +7,10 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_BUTTON_TRIGGER_ON_RELEASE
-#include "../../shared/nuklear.h"
+#include "../../vendor/nuklear.h"
 
 #define NK_SDL_RENDERER_IMPLEMENTATION
-#include "../../shared/nuklear_sdl_renderer.h"
+#include "../../vendor/nuklear_sdl_renderer.h"
 
 #include <dirent.h>
 #include <stdio.h>
@@ -19,8 +19,8 @@
 #include <SDL2/SDL_image.h>
 #include "editor.h"
 #include "utils.h"
-#include "../../shared/logger.h"
-#include "../../shared/asserts.h"
+#include "../../engine/logger/logger.h"
+#include "../../engine/logger/asserts.h"
 #include "../../engine/asset_manager.h"
 
 static int init_sdl();

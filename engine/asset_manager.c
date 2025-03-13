@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include "../shared/logger.h"
+#include "../engine/logger/logger.h"
 #include "asset_manager.h"
 
 unsigned long

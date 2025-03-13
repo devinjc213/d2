@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "tilemap.h"
-#include "../../shared/logger.h"
+#include "../../engine/logger/logger.h"
 
 #define INITIAL_LAYER_CAPACITY 420
 
