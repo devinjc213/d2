@@ -1,10 +1,27 @@
-# Welcome to Dozy!
+# D2 - A 2D Game Engine
+Welcome to D2, 2D game engine built in C, using minimal libraries, namely SDL/OpenGL.
 
-My first attempt at a 2D game engine.  I am going in mostly dry, not reading any game design books, and watching various YouTube videos.  I wanted to see what I can muster without much guidance.
+## Motivation
+This is mostly an exercise in learning.   I want to explore game engine development, graphics programming, memory management.  And I can't help but give myself seemingly impossible tasks
 
+## Design Outline
+Still an ever changing process.  But currently envisioning something like:
 
-## Currently Working:
-### Tilemap Editor
-- Selecting from variety of tilesheets
-- 3 paint layers, with optional rendering of each layer
-- ability to zoom in and out on each window
+### Engine
+
+ - [ ] Common C utils
+ - [ ] Math
+ - [ ] Renderer
+	 - [ ] SDL / OpenGL hybrid
+- [ ] Asset Manager
+	- [ ] Sprites / Tilesheets
+	- [ ] Shaders / Textures
+- [ ] Arena Memory Allocator
+- [ ] Entity/Component management
+- [ ] Audio
+- [ ] Packaging / Parsing asset files
+
+### Tools
+- [ ] Tilemap Editor / Scene composer
+- [ ] Entity / Component Editor
+- [ ] Shader configuration
