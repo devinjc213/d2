@@ -1,12 +1,15 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
-
 #include <SDL2/SDL.h>
-#include "texture_cache.h"
 #include "tilemap.h"
+#include "defs.h"
+#include "../../engine/asset_manager.h"
+
+typedef struct {
+  char *paths[MAX_ASSET_FILES];
+  int count;
+} asset_directory_t;
 
 typedef struct {
   int layer;
@@ -27,6 +30,12 @@ typedef struct {
 } MouseState;
 
 typedef struct {
+  char *tilesheet;
+  SDL_Rect rect;
+  int active_selection;
+} SelectionBuffer;
+
+typedef struct {
   int quit;
 
   SDL_Window* e_win;
@@ -37,11 +46,16 @@ typedef struct {
   SDL_Renderer* t_render;
   SDL_Renderer* s_render;
 
-  struct nk_context* nk_ctx;
-  struct nk_font_atlas* nk_atlas;
+  struct nk_sdl* e_nk_state;
+  struct nk_sdl* t_nk_state;
+  struct nk_sdl* s_nk_state;
+  struct nk_font_atlas* e_nk_atlas;
+  struct nk_font_atlas* t_nk_atlas;
+  struct nk_font_atlas* s_nk_atlas;
 
-  TextureCache* e_cache;
-  TextureCache* t_cache;
+  asset_directory_t d_asset_dir;
+
+  AssetMap* asset_map;
 
   TileMap* tile_map;
 
@@ -79,35 +93,12 @@ typedef struct {
   EditorSettings settings;
 } Editor;
 
-
 void init_editor(Editor* e);
 void cleanup_editor(Editor* e);
-
-//input
-void screen_to_tilesheet(int w,
-                         int h,
-                         int zoom_x,
-                         int zoom_y,
-                         float scale,
-                         int screen_x,
-                         int screen_y,
-                         int* tile_x,
-                         int* tile_y);
-//rendering
-void tilesheet_to_screen(int zoom_x,
-                         int zoom_y,
-                         float scale,
-                         int tile_x,
-                         int tile_y,
-                         int* screen_x,
-                         int* screen_y);
-
-void apply_zoom(ZoomState* z, float new_scale, int m_x, int m_y);
-SDL_bool is_window_focused(SDL_Window* window);
-int snap_to_grid(int coord, float scale);
 void render_grid(SDL_Renderer* renderer, int offset_x, int offset_y, float scale);
 void render_editor_win(Editor* e);
 void render_tilesheet_win(Editor* e);
 void render_settings_win(Editor* e);
+void handle_settings_input(SDL_Event* e, Editor* editor);
 
 #endif

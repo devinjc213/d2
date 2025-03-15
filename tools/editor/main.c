@@ -3,17 +3,16 @@
 
 int main() {
     Editor editor;
+
     init_editor(&editor);
 
     while (!editor.quit) {
-        // === Handle Input ===
-        SDL_Event e;
+        SDL_Event ev;
 
-        while (SDL_PollEvent(&e) != 0) {
-            handle_input(&e, &editor);
+        while (SDL_PollEvent(&ev) != 0) {
+            handle_input(&ev, &editor);
         }
 
-        // === Handle Rendering ===
         render_editor_win(&editor);
         render_tilesheet_win(&editor);
         render_settings_win(&editor);

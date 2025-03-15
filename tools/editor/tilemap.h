@@ -1,21 +1,14 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
-#define LAYERS 3
-#define MAP_WIDTH 64 
-#define MAP_HEIGHT 64 
-#define INITIAL_LAYER_CAPACITY 250
-
-#include "../../shared/sprite.h"
-#include "tilesheet.h"
-#include "texture_cache.h"
-#include "defs.h"
+#include "../../engine/asset_manager.h"
+#include "utils.h"
 
 typedef struct {
   int layer;
   SDL_Rect src;
   SDL_Rect dest;
-  tilesheet_t tilesheet;
+  char *tilesheet;
 } RenderTile;
 
 typedef struct {
@@ -42,7 +35,7 @@ TileMap* create_tilemap(int height, int width, int layers);
 void init_render_layer(RenderLayer* render_layer, int initial_capcity);
 void add_render_tile(RenderLayer* layer, RenderTile tile);
 void add_prop_tile(TileMap* map, PropTile props);
-void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache, ZoomState* z);
+void render_layer(RenderLayer* layer, SDL_Renderer* renderer, enum Renderer render_idx, AssetMap* cache, ZoomState* z);
 void free_tilemap(TileMap* map);
 
 #endif

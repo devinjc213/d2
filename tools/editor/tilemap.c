@@ -1,9 +1,10 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
-#include "editor.h"
+#include "utils.h"
 #include "tilemap.h"
-#include "../../shared/logger.h"
-#include "texture_cache.h"
+#include "../../engine/logger/logger.h"
+
+#define INITIAL_LAYER_CAPACITY 420
 
 TileMap* create_tilemap(int height, int width, int layers) {
     TileMap* map = malloc(sizeof(TileMap));
@@ -36,7 +37,8 @@ void add_render_tile(RenderLayer* layer, RenderTile tile) {
     layer->tiles[layer->count++] = tile;
 }
 
-void add_prop_tile(TileMap* map, PropTile props) {
+void
+add_prop_tile(TileMap* map, PropTile props) {
     if (map->prop_count == map->height * map->width) {
         GERROR("Prop tiles full");
     }
@@ -45,13 +47,18 @@ void add_prop_tile(TileMap* map, PropTile props) {
 }
 
 
-void render_layer(RenderLayer* layer, SDL_Renderer* renderer, TextureCache* cache, ZoomState* z) {
+void
+render_layer(RenderLayer* layer,
+             SDL_Renderer* renderer,
+             enum Renderer render_idx,
+             AssetMap* cache, ZoomState* z) {
+
     if (!layer->count) return;
 
     for (int i = 0; i < layer->count; i++) {
-        SDL_Texture* texture = get_texture(cache, renderer, layer->tiles[i].tilesheet);
+        SDL_Texture* texture = get_asset(cache, layer->tiles[i].tilesheet, render_idx);
         int x, y;
-        tilesheet_to_screen(z->offset_x,
+        world_to_screen(z->offset_x,
                             z->offset_y,
                             z->scale,
                             layer->tiles[i].dest.x,

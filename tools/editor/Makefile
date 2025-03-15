@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
+CFLAGS = -g -Wall -Wextra -std=c11 -D_DEFAULT_SOURCE
 LDFLAGS = -lSDL2 -lSDL2_image -lm
 
 TARGET = dozy_tiler 
-SRCS = main.c editor.c input.c tilemap.c tilesheet.c texture_cache.c ../../shared/logger.c ../../shared/sprite.c 
+SRCS = main.c editor.c input.c tilemap.c utils.c ../../shared/logger.c ../../shared/sprite.c ../../engine/asset_manager.c
 ASSETS_DIR = ../../assets/Tilesets
 BIN_DIR = bin
 
