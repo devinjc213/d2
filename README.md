@@ -4,6 +4,9 @@ Welcome to D2, 2D game engine built in C, using minimal libraries, namely SDL/Op
 ## Motivation
 This is mostly an exercise in learning.   I want to explore game engine development, graphics programming, memory management.  And I can't help but give myself seemingly impossible tasks
 
+## Goals
+If I can see it through, I'd like to have a very basic 2d game engine with shader support.  Enough of an engine to make some clones of some retro style games.
+
 ## Design Outline
 Still an ever changing process.  But currently envisioning something like:
 
